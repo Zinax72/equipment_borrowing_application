@@ -139,7 +139,7 @@ class DashboardScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.softYellow,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.gold.withOpacity(.55)),
+              border: Border.all(color: AppColors.gold.withValues(alpha: 0.55)),
             ),
             child: Row(
               children: [

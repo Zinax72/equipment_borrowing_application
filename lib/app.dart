@@ -1,4 +1,4 @@
-appimport 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'utils/constants.dart';
 
@@ -36,7 +36,10 @@ class BorrowItApp extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppColors.universityRed, width: 2),
+            borderSide: const BorderSide(
+              color: AppColors.universityRed,
+              width: 2,
+            ),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),

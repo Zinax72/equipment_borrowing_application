@@ -32,7 +32,7 @@ class EquipmentCard extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: AppColors.universityRed.withOpacity(.10),
+            color: AppColors.universityRed.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(13),
           ),
           child: Icon(equipment.icon, color: AppColors.universityRed),
