@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
+import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 
 class AppDrawer extends StatelessWidget {
   final int currentIndex;
@@ -72,6 +74,21 @@ class AppDrawer extends StatelessWidget {
             title: const Text('Borrowing History'),
             subtitle: const Text('Completed transactions'),
             onTap: onOpenHistory,
+          ),
+          ListTile(
+            leading: const Icon(Icons.notifications_active_outlined),
+            title: const Text('Test notification'),
+            subtitle: const Text('Sends one now and one in a minute'),
+            onTap: () {
+              Navigator.pop(context);
+              NotificationService.instance.sendTest();
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text('Log out'),
+            onTap: () => AuthService().logout(),
           ),
         ],
       ),

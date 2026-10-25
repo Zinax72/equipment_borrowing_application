@@ -1,56 +1,66 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/borrow_request.dart';
 import '../models/request_status.dart';
+import '../services/firestore_service.dart';
 import '../utils/constants.dart';
-import '../widgets/status_chip.dart';
+import '../widgets/request_card.dart';
 
-class HistoryScreen extends StatelessWidget {
-  final List<BorrowRequest> requests;
+class HistoryScreen extends StatefulWidget {
+  const HistoryScreen({super.key});
 
-  const HistoryScreen({super.key, required this.requests});
+  @override
+  State<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends State<HistoryScreen> {
+  late final Stream<List<BorrowRequest>> _stream = FirestoreService()
+      .requestsStream(FirebaseAuth.instance.currentUser?.uid ?? '');
 
   @override
   Widget build(BuildContext context) {
-    final history = requests
-        .where((r) => r.status == RequestStatus.returned)
-        .toList();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Borrowing History'),
         backgroundColor: AppColors.universityRed,
         foregroundColor: Colors.white,
       ),
-      body: history.isEmpty
-          ? Center(
+      body: StreamBuilder<List<BorrowRequest>>(
+        stream: _stream,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(child: Text('Could not load your history.'));
+          }
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final history = snapshot.data!
+              .where((r) => r.status == RequestStatus.returned)
+              .toList();
+
+          if (history.isEmpty) {
+            return const Center(
               child: Padding(
-                padding: const EdgeInsets.all(30),
+                padding: EdgeInsets.all(30),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: AppColors.softYellow,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: const Icon(
-                        Icons.history,
-                        size: 42,
-                        color: AppColors.universityRed,
-                      ),
+                    Icon(
+                      Icons.history,
+                      size: 50,
+                      color: AppColors.universityRed,
                     ),
-                    const SizedBox(height: 18),
-                    const Text(
+                    SizedBox(height: 12),
+                    Text(
                       'No borrowing history yet',
                       style: TextStyle(
-                        fontSize: 21,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 7),
-                    const Text(
+                    SizedBox(height: 6),
+                    Text(
                       'Completed (returned) transactions will appear here.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.grey),
@@ -58,66 +68,18 @@ class HistoryScreen extends StatelessWidget {
                   ],
                 ),
               ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(18),
-              itemCount: history.length,
-              itemBuilder: (context, index) {
-                final request = history[index];
-                return Card(
-                  elevation: 0,
-                  margin: const EdgeInsets.only(bottom: 14),
-                  color: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
-                    side: const BorderSide(color: Color(0xFFE5E5E5)),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(17),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Completed Transaction',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            StatusChip(status: RequestStatus.returned),
-                          ],
-                        ),
-                        const Divider(height: 22),
-                        Text(
-                          request.organization,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text('Requester: ${request.requester}'),
-                        Text('Borrowed: ${request.date}'),
-                        Text('Returned: ${request.returnDate}'),
-                        Text('Equipment: ${request.equipment.join(', ')}'),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Purpose: ${request.purpose}',
-                          style: const TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(18),
+            itemCount: history.length,
+            itemBuilder: (context, index) {
+              return RequestCard(request: history[index]);
+            },
+          );
+        },
+      ),
     );
   }
 }

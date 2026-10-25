@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/equipment.dart';
 import '../utils/constants.dart';
+import 'equipment_image.dart';
 
 class EquipmentCard extends StatelessWidget {
   final Equipment equipment;
@@ -28,14 +29,11 @@ class EquipmentCard extends StatelessWidget {
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-        leading: Container(
+        leading: EquipmentImage(
+          imageUrl: equipment.imageUrl,
           width: 48,
           height: 48,
-          decoration: BoxDecoration(
-            color: AppColors.universityRed.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(13),
-          ),
-          child: Icon(equipment.icon, color: AppColors.universityRed),
+          radius: 13,
         ),
         title: Text(
           equipment.name,
@@ -45,7 +43,7 @@ class EquipmentCard extends StatelessWidget {
           '${equipment.category} • ${equipment.available} available',
         ),
         trailing: IconButton(
-          onPressed: onTap,
+          onPressed: equipment.isAvailable ? onTap : null,
           icon: Icon(
             selected ? Icons.check_circle : Icons.add_circle_outline,
             color: selected ? Colors.green : AppColors.universityRed,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'screens/auth/auth_gate.dart';
 import 'utils/constants.dart';
 
 class BorrowItApp extends StatelessWidget {
@@ -51,7 +51,7 @@ class BorrowItApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const HomeScreen(),
+      home: const AuthGate(),
     );
   }
 }
