@@ -11,18 +11,20 @@ import '../services/notification_service.dart';
 import '../utils/constants.dart';
 import '../utils/date_format.dart';
 import '../widgets/app_text_field.dart';
+import '../widgets/campus_primary_button.dart';
+import '../widgets/quantity_stepper.dart';
 import '../widgets/review_row.dart';
 import '../widgets/section_title.dart';
 
 class BorrowFormScreen extends StatefulWidget {
-  final List<String> selectedEquipment;
-  final ValueChanged<String> onEquipmentChanged;
+  final Map<String, int> selectedEquipment;
+  final void Function(String name, int quantity) onQuantityChanged;
   final VoidCallback onSubmitted;
 
   const BorrowFormScreen({
     super.key,
     required this.selectedEquipment,
-    required this.onEquipmentChanged,
+    required this.onQuantityChanged,
     required this.onSubmitted,
   });
 
@@ -44,6 +46,18 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
   DateTime? _returnDate;
   Uint8List? _imageBytes;
   bool _submitting = false;
+
+  String get _selectedEquipmentSummary => widget.selectedEquipment.entries
+      .map(
+        (entry) =>
+            entry.value > 1 ? '${entry.key} × ${entry.value}' : entry.key,
+      )
+      .join(', ');
+
+  int get _selectedUnitCount => widget.selectedEquipment.values.fold<int>(
+    0,
+    (total, quantity) => total + quantity,
+  );
 
   @override
   void dispose() {
@@ -163,10 +177,7 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ReviewRow(
-                  label: 'Equipment',
-                  value: widget.selectedEquipment.join(', '),
-                ),
+                ReviewRow(label: 'Equipment', value: _selectedEquipmentSummary),
                 ReviewRow(
                   label: 'Date needed',
                   value: _dateNeededController.text,
@@ -191,12 +202,8 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
               onPressed: () => Navigator.pop(dialogContext, false),
               child: const Text('Edit'),
             ),
-            ElevatedButton(
+            FilledButton(
               onPressed: () => Navigator.pop(dialogContext, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-              ),
               child: const Text('Submit'),
             ),
           ],
@@ -208,8 +215,8 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (widget.selectedEquipment.isEmpty) {
-      _showMessage('Select at least one equipment.');
+    if (_selectedUnitCount == 0) {
+      _showMessage('Add at least one item to your request.');
       return;
     }
 
@@ -228,7 +235,8 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
         userId: user.uid,
         requesterName: user.displayName ?? '',
         email: user.email ?? '',
-        equipment: List<String>.from(widget.selectedEquipment),
+        equipment: widget.selectedEquipment.keys.toList(),
+        equipmentQuantities: Map<String, int>.from(widget.selectedEquipment),
         purpose: _purposeController.text.trim(),
         dateNeeded: _dateNeeded!,
         returnDate: _returnDate!,
@@ -242,7 +250,7 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
       await NotificationService.instance.showNow(
         requestId: requestId,
         title: 'Request submitted',
-        body: '${request.equipment.join(', ')} is waiting for approval.',
+        body: '${request.equipmentSummary} is waiting for approval.',
       );
       await NotificationService.instance.scheduleReturnReminder(
         requestId: requestId,
@@ -286,14 +294,20 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
               subtitle: 'Choose equipment and fill in the details.',
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Equipment',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            Text(
+              'Equipment · $_selectedUnitCount selected',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: AppColors.darkText,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 8),
             StreamBuilder<List<Equipment>>(
               stream: _equipmentStream,
               builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return const Text('Could not load equipment. Try again.');
+                }
                 if (!snapshot.hasData) {
                   return const Padding(
                     padding: EdgeInsets.all(12),
@@ -303,18 +317,79 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
                 final items = snapshot.data!
                     .where((e) => e.isAvailable)
                     .toList();
-                return Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: items.map((item) {
-                    return FilterChip(
-                      label: Text(item.name),
-                      selected: widget.selectedEquipment.contains(item.name),
-                      selectedColor: AppColors.softYellow,
-                      checkmarkColor: AppColors.universityRed,
-                      onSelected: (_) => widget.onEquipmentChanged(item.name),
-                    );
-                  }).toList(),
+                final selectedItems = items
+                    .where(
+                      (item) => (widget.selectedEquipment[item.name] ?? 0) > 0,
+                    )
+                    .toList();
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: items.map((item) {
+                        final quantity =
+                            widget.selectedEquipment[item.name] ?? 0;
+                        final selected = quantity > 0;
+                        return FilterChip(
+                          label: Text(
+                            selected ? '${item.name} · $quantity' : item.name,
+                          ),
+                          selected: selected,
+                          backgroundColor: AppColors.field,
+                          selectedColor: AppColors.coralWash,
+                          checkmarkColor: AppColors.universityRed,
+                          side: BorderSide.none,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          labelStyle: TextStyle(
+                            color: selected
+                                ? AppColors.universityRed
+                                : AppColors.darkText,
+                            fontWeight: selected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                          ),
+                          onSelected: (isSelected) => widget.onQuantityChanged(
+                            item.name,
+                            isSelected ? 1 : 0,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    if (selectedItems.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      ...selectedItems.map((item) {
+                        final quantity =
+                            widget.selectedEquipment[item.name] ?? 0;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 3),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  item.name,
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: AppColors.darkText,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                              ),
+                              QuantityStepper(
+                                quantity: quantity,
+                                maximum: item.available,
+                                onChanged: (nextQuantity) => widget
+                                    .onQuantityChanged(item.name, nextQuantity),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ],
                 );
               },
             ),
@@ -364,13 +439,17 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
             ),
             const SizedBox(height: 8),
             if (_imageBytes == null)
-              OutlinedButton.icon(
+              FilledButton.tonalIcon(
                 onPressed: _showImageSourceSheet,
                 icon: const Icon(Icons.add_a_photo_outlined),
-                label: const Text('Attach a photo'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.universityRed,
-                  minimumSize: const Size.fromHeight(48),
+                label: const Text('Choose a photo'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                  backgroundColor: AppColors.field,
+                  foregroundColor: AppColors.darkText,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
               )
             else
@@ -403,25 +482,10 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
                 ],
               ),
             const SizedBox(height: 24),
-            SizedBox(
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _submitting ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.universityRed,
-                  foregroundColor: Colors.white,
-                ),
-                child: _submitting
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text('Submit Request'),
-              ),
+            CampusPrimaryButton(
+              label: 'Submit request',
+              onPressed: _submitting ? null : _submit,
+              loading: _submitting,
             ),
           ],
         ),

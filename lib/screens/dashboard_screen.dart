@@ -1,15 +1,17 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/equipment.dart';
 import '../utils/constants.dart';
 import '../widgets/equipment_card.dart';
+import '../widgets/campus_primary_button.dart';
 import '../widgets/summary_card.dart';
 
 class DashboardScreen extends StatelessWidget {
   final Stream<List<Equipment>> equipmentStream;
   final VoidCallback onBorrowPressed;
   final VoidCallback onViewAllPressed;
-  final List<String> selectedEquipment;
-  final ValueChanged<String> onEquipmentChanged;
+  final Map<String, int> selectedEquipment;
+  final void Function(String name, int quantity) onQuantityChanged;
   final int approvalCount;
 
   const DashboardScreen({
@@ -18,12 +20,17 @@ class DashboardScreen extends StatelessWidget {
     required this.onBorrowPressed,
     required this.onViewAllPressed,
     required this.selectedEquipment,
-    required this.onEquipmentChanged,
+    required this.onQuantityChanged,
     required this.approvalCount,
   });
 
   @override
   Widget build(BuildContext context) {
+    final displayName = FirebaseAuth.instance.currentUser?.displayName?.trim();
+    final greetingName = displayName == null || displayName.isEmpty
+        ? 'there'
+        : displayName.split(RegExp(r'\s+')).first;
+
     return SafeArea(
       child: StreamBuilder<List<Equipment>>(
         stream: equipmentStream,
@@ -33,160 +40,204 @@ class DashboardScreen extends StatelessWidget {
             0,
             (sum, item) => sum + item.available,
           );
+          final selectedCount = selectedEquipment.values.fold<int>(
+            0,
+            (sum, quantity) => sum + quantity,
+          );
 
           return ListView(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
             children: [
-              Container(
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  color: AppColors.universityRed,
-                  borderRadius: BorderRadius.circular(22),
+              Text(
+                'Hello, $greetingName!',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: AppColors.darkText,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Equipment made easier.',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Browse school equipment and submit borrowing requests.',
-                            style: TextStyle(color: Colors.white, height: 1.4),
-                          ),
-                          const SizedBox(height: 18),
-                          ElevatedButton(
-                            onPressed: onBorrowPressed,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.gold,
-                              foregroundColor: AppColors.darkText,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 13,
-                              ),
-                            ),
-                            child: const Text(
-                              'Start Borrowing',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    const Icon(
-                      Icons.inventory_2_outlined,
-                      color: Colors.white,
-                      size: 70,
-                    ),
-                  ],
+              ),
+              const SizedBox(height: 5),
+              Text(
+                'Find what you need for class and campus life.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.mutedText,
+                  height: 1.4,
                 ),
               ),
               const SizedBox(height: 22),
-              const Text(
-                'Quick Overview',
-                style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
                     child: SummaryCard(
-                      title: 'Available',
+                      title: 'Items available',
                       value: '$totalAvailable',
-                      icon: Icons.check_circle_outline,
-                      iconColor: Colors.green,
+                      icon: Icons.inventory_2_outlined,
+                      iconColor: AppColors.green,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: SummaryCard(
-                      title: 'For Approval',
+                      title: 'Awaiting review',
                       value: '$approvalCount',
-                      icon: Icons.pending_actions_outlined,
-                      iconColor: AppColors.gold,
+                      icon: Icons.schedule_outlined,
+                      iconColor: AppColors.universityRed,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 27),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Text(
-                    'Equipment',
-                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                  Expanded(
+                    child: Text(
+                      'Find equipment',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: AppColors.darkText,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                   TextButton(
                     onPressed: onViewAllPressed,
-                    child: const Text('View all'),
+                    child: const Text('Browse all'),
                   ),
                 ],
               ),
-              if (!snapshot.hasData)
+              const SizedBox(height: 12),
+              if (snapshot.hasError)
+                _CatalogMessage(
+                  icon: Icons.wifi_off_outlined,
+                  message: 'Could not load equipment. Check your connection.',
+                )
+              else if (!snapshot.hasData)
                 const Padding(
-                  padding: EdgeInsets.all(20),
+                  padding: EdgeInsets.all(30),
                   child: Center(child: CircularProgressIndicator()),
                 )
+              else if (items.isEmpty)
+                _CatalogMessage(
+                  icon: Icons.inventory_2_outlined,
+                  message: 'No equipment is listed right now.',
+                )
               else
-                ListView.builder(
+                GridView.builder(
                   itemCount: items.length,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.68,
+                  ),
                   itemBuilder: (context, index) {
                     final item = items[index];
                     return EquipmentCard(
                       equipment: item,
-                      selected: selectedEquipment.contains(item.name),
-                      onTap: () => onEquipmentChanged(item.name),
+                      quantity: selectedEquipment[item.name] ?? 0,
+                      onQuantityChanged: (quantity) =>
+                          onQuantityChanged(item.name, quantity),
                     );
                   },
                 ),
-              const SizedBox(height: 15),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.softYellow,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppColors.gold.withValues(alpha: 0.55),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.verified_outlined,
-                      color: AppColors.universityRed,
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text(
-                        'Ready to request equipment? Continue to the borrowing form.',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                child: selectedEquipment.isEmpty
+                    ? const SizedBox.shrink(key: ValueKey('no-selection'))
+                    : Padding(
+                        key: const ValueKey('selection-summary'),
+                        padding: const EdgeInsets.only(top: 20),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.coralWash,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '$selectedCount ${selectedCount == 1 ? 'item' : 'items'} selected',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall
+                                          ?.copyWith(
+                                            color: AppColors.darkText,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      selectedEquipment.entries
+                                          .map(
+                                            (entry) => entry.value > 1
+                                                ? '${entry.key} × ${entry.value}'
+                                                : entry.key,
+                                          )
+                                          .join(', '),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: AppColors.mutedText,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 15),
+                              CampusPrimaryButton(
+                                label: 'Continue',
+                                onPressed: onBorrowPressed,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                    ElevatedButton(
-                      onPressed: onBorrowPressed,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('Confirm'),
-                    ),
-                  ],
-                ),
               ),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _CatalogMessage extends StatelessWidget {
+  final IconData icon;
+  final String message;
+
+  const _CatalogMessage({required this.icon, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 26),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: AppColors.mutedText, size: 28),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.mutedText),
+          ),
+        ],
       ),
     );
   }

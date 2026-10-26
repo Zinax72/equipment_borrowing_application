@@ -27,11 +27,11 @@ class EquipmentImage extends StatelessWidget {
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
             return Container(
-              color: AppColors.softYellow,
+              color: AppColors.field,
               child: const Center(
                 child: Icon(
-                  Icons.image_not_supported_outlined,
-                  color: AppColors.universityRed,
+                  Icons.inventory_2_outlined,
+                  color: AppColors.mutedText,
                 ),
               ),
             );
@@ -39,7 +39,7 @@ class EquipmentImage extends StatelessWidget {
           loadingBuilder: (context, child, progress) {
             if (progress == null) return child;
             return Container(
-              color: AppColors.softYellow,
+              color: AppColors.field,
               child: const Center(
                 child: SizedBox(
                   width: 24,

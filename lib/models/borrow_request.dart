@@ -7,6 +7,7 @@ class BorrowRequest {
   final String requesterName;
   final String email;
   final List<String> equipment;
+  final Map<String, int> equipmentQuantities;
   final String purpose;
   final DateTime dateNeeded;
   final DateTime returnDate;
@@ -20,6 +21,7 @@ class BorrowRequest {
     required this.requesterName,
     required this.email,
     required this.equipment,
+    this.equipmentQuantities = const {},
     required this.purpose,
     required this.dateNeeded,
     required this.returnDate,
@@ -28,12 +30,33 @@ class BorrowRequest {
     required this.createdAt,
   });
 
+  Map<String, int> get effectiveEquipmentQuantities {
+    if (equipmentQuantities.isNotEmpty) return equipmentQuantities;
+    final quantities = <String, int>{};
+    for (final item in equipment) {
+      quantities.update(
+        item,
+        (currentQuantity) => currentQuantity + 1,
+        ifAbsent: () => 1,
+      );
+    }
+    return quantities;
+  }
+
+  String get equipmentSummary => effectiveEquipmentQuantities.entries
+      .map(
+        (entry) =>
+            entry.value > 1 ? '${entry.key} × ${entry.value}' : entry.key,
+      )
+      .join(', ');
+
   Map<String, dynamic> toMap() {
     return {
       'userId': userId,
       'requesterName': requesterName,
       'email': email,
       'equipment': equipment,
+      'equipmentQuantities': equipmentQuantities,
       'purpose': purpose,
       'dateNeeded': Timestamp.fromDate(dateNeeded),
       'returnDate': Timestamp.fromDate(returnDate),
@@ -45,12 +68,21 @@ class BorrowRequest {
 
   factory BorrowRequest.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
+    final equipment = List<String>.from(data['equipment'] ?? []);
+    final rawQuantities = data['equipmentQuantities'];
+    final quantities = rawQuantities is Map
+        ? rawQuantities.map(
+            (key, value) => MapEntry(key.toString(), (value as num).toInt()),
+          )
+        : _countEquipment(equipment);
+
     return BorrowRequest(
       id: doc.id,
       userId: data['userId'] ?? '',
       requesterName: data['requesterName'] ?? '',
       email: data['email'] ?? '',
-      equipment: List<String>.from(data['equipment'] ?? []),
+      equipment: equipment,
+      equipmentQuantities: quantities,
       purpose: data['purpose'] ?? '',
       dateNeeded:
           (data['dateNeeded'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -63,5 +95,17 @@ class BorrowRequest {
       ),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
+  }
+
+  static Map<String, int> _countEquipment(List<String> equipment) {
+    final quantities = <String, int>{};
+    for (final item in equipment) {
+      quantities.update(
+        item,
+        (currentQuantity) => currentQuantity + 1,
+        ifAbsent: () => 1,
+      );
+    }
+    return quantities;
   }
 }

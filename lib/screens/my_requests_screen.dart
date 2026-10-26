@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import '../models/borrow_request.dart';
 import '../models/request_status.dart';
 import '../services/firestore_service.dart';
+import '../services/notification_service.dart';
 import '../utils/constants.dart';
 import '../widgets/request_card.dart';
 import '../widgets/section_title.dart';
-import '../services/notification_service.dart';
 
 class MyRequestsScreen extends StatefulWidget {
   const MyRequestsScreen({super.key});
@@ -31,12 +31,14 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Keep'),
+              child: const Text('Keep request'),
             ),
-            TextButton(
+            FilledButton(
               onPressed: () => Navigator.pop(dialogContext, true),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Delete'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.brightRed,
+              ),
+              child: const Text('Delete request'),
             ),
           ],
         );
@@ -61,62 +63,67 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // Returned requests live in Borrowing History.
           final active = snapshot.data!
-              .where((r) => r.status != RequestStatus.returned)
+              .where((request) => request.status != RequestStatus.returned)
               .toList();
 
-          if (active.isEmpty) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(30),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.assignment_outlined,
-                      size: 50,
-                      color: AppColors.universityRed,
-                    ),
-                    SizedBox(height: 12),
-                    Text(
-                      'No requests yet',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      'Submit a borrow request and it will show up here.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-
           return ListView(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
             children: [
               const SectionTitle(
-                title: 'My Requests',
-                subtitle: 'Track the status of your borrowing requests.',
+                title: 'My requests',
+                subtitle: 'Follow each request from review to return.',
               ),
-              const SizedBox(height: 16),
-              ...active.map((request) {
-                return RequestCard(
-                  request: request,
-                  onStatusChanged: (status) {
-                    _firestore.updateStatus(request.id, status);
-                  },
-                  onCancel: request.status == RequestStatus.pending
-                      ? () => _cancel(request)
-                      : null,
-                );
-              }),
+              const SizedBox(height: 20),
+              if (active.isEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 28,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(
+                        Icons.receipt_long_outlined,
+                        size: 32,
+                        color: AppColors.universityRed,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No active requests',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: AppColors.darkText,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        'Your submitted requests will show up here.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.mutedText,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                ...active.map(
+                  (request) => RequestCard(
+                    request: request,
+                    onStatusChanged: (status) {
+                      _firestore.updateStatus(request.id, status);
+                    },
+                    onCancel: request.status == RequestStatus.pending
+                        ? () => _cancel(request)
+                        : null,
+                  ),
+                ),
             ],
           );
         },

@@ -3,12 +3,20 @@ import '../models/equipment.dart';
 import '../services/firestore_service.dart';
 import '../utils/constants.dart';
 import '../widgets/equipment_image.dart';
+import '../widgets/quantity_stepper.dart';
 import 'equipment_details_screen.dart';
 
 class EquipmentListScreen extends StatefulWidget {
   final ValueChanged<Equipment> onBorrow;
+  final Map<String, int> selectedEquipment;
+  final void Function(String name, int quantity) onQuantityChanged;
 
-  const EquipmentListScreen({super.key, required this.onBorrow});
+  const EquipmentListScreen({
+    super.key,
+    required this.onBorrow,
+    required this.selectedEquipment,
+    required this.onQuantityChanged,
+  });
 
   @override
   State<EquipmentListScreen> createState() => _EquipmentListScreenState();
@@ -16,7 +24,6 @@ class EquipmentListScreen extends StatefulWidget {
 
 class _EquipmentListScreenState extends State<EquipmentListScreen> {
   final _searchController = TextEditingController();
-  // Created once, so typing in the search box doesn't re-subscribe.
   late final Stream<List<Equipment>> _stream = FirestoreService()
       .equipmentStream();
   String _query = '';
@@ -28,12 +35,12 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
   }
 
   List<Equipment> _filter(List<Equipment> all) {
-    final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return all;
-    return all.where((e) {
-      return e.name.toLowerCase().contains(q) ||
-          e.category.toLowerCase().contains(q) ||
-          e.description.toLowerCase().contains(q);
+    final query = _query.trim().toLowerCase();
+    if (query.isEmpty) return all;
+    return all.where((equipment) {
+      return equipment.name.toLowerCase().contains(query) ||
+          equipment.category.toLowerCase().contains(query) ||
+          equipment.description.toLowerCase().contains(query);
     }).toList();
   }
 
@@ -55,177 +62,299 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Equipment'),
-        backgroundColor: AppColors.universityRed,
-        foregroundColor: Colors.white,
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
-            child: TextField(
-              controller: _searchController,
-              onChanged: (value) => setState(() => _query = value),
-              decoration: InputDecoration(
-                hintText: 'Search by name, category...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _query.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _query = '');
-                        },
-                      )
-                    : null,
+      appBar: AppBar(title: const Text('Equipment')),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) => setState(() => _query = value),
+                decoration: InputDecoration(
+                  hintText: 'Search equipment',
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  suffixIcon: _query.isNotEmpty
+                      ? IconButton(
+                          tooltip: 'Clear search',
+                          icon: const Icon(Icons.close_rounded),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _query = '');
+                          },
+                        )
+                      : null,
+                ),
               ),
             ),
-          ),
-          Expanded(
-            child: StreamBuilder<List<Equipment>>(
-              stream: _stream,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return const Center(child: Text('Could not load equipment.'));
-                }
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                final items = _filter(snapshot.data!);
-
-                if (items.isEmpty) {
-                  return const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.search_off, size: 50, color: Colors.grey),
-                        SizedBox(height: 12),
-                        Text(
-                          'No equipment found',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 6),
-                        Text(
-                          'Try a different keyword.',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(18),
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final equipment = items[index];
-                    final color = equipment.isAvailable
-                        ? Colors.green
-                        : Colors.red;
-
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 14),
-                      elevation: 0,
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                        side: const BorderSide(color: Color(0xFFE5E5E5)),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(17),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            EquipmentImage(
-                              imageUrl: equipment.imageUrl,
-                              height: 150,
-                            ),
-                            const SizedBox(height: 14),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        equipment.name,
-                                        style: const TextStyle(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        equipment.category,
-                                        style: const TextStyle(
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: color.withValues(alpha: 0.10),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    equipment.isAvailable
-                                        ? '${equipment.available} available'
-                                        : 'Unavailable',
-                                    style: TextStyle(
-                                      color: color,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            Text(
-                              equipment.description,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                height: 1.4,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: () => _openDetails(equipment),
-                                icon: const Icon(Icons.visibility_outlined),
-                                label: const Text('View Details'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.universityRed,
-                                  side: const BorderSide(
-                                    color: AppColors.universityRed,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+            Expanded(
+              child: StreamBuilder<List<Equipment>>(
+                stream: _stream,
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return const Center(
+                      child: Text('Could not load equipment.'),
                     );
-                  },
-                );
-              },
+                  }
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final items = _filter(snapshot.data!);
+                  if (items.isEmpty) return _EmptyCatalog(query: _query);
+
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      final columns = constraints.maxWidth >= 760
+                          ? 4
+                          : constraints.maxWidth >= 520
+                          ? 3
+                          : 2;
+
+                      return GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                        itemCount: items.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: columns,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.70,
+                        ),
+                        itemBuilder: (context, index) {
+                          final equipment = items[index];
+                          return _EquipmentTile(
+                            equipment: equipment,
+                            quantity:
+                                widget.selectedEquipment[equipment.name] ?? 0,
+                            onQuantityChanged: (quantity) => widget
+                                .onQuantityChanged(equipment.name, quantity),
+                            onTap: () => _openDetails(equipment),
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EquipmentTile extends StatelessWidget {
+  final Equipment equipment;
+  final int quantity;
+  final ValueChanged<int> onQuantityChanged;
+  final VoidCallback onTap;
+
+  const _EquipmentTile({
+    required this.equipment,
+    required this.quantity,
+    required this.onQuantityChanged,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = quantity > 0;
+    final availabilityColor = equipment.isAvailable
+        ? AppColors.green
+        : AppColors.mutedText;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      decoration: BoxDecoration(
+        color: selected ? AppColors.coralWash : Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: selected ? AppColors.universityRed : Colors.transparent,
+          width: selected ? 2 : 0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.darkText.withValues(alpha: 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 7),
           ),
         ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(2),
+        child: Material(
+          color: selected ? AppColors.coralWash : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 6,
+                child: Semantics(
+                  button: true,
+                  label:
+                      '${equipment.name}, ${equipment.category}, ${equipment.isAvailable ? '${equipment.available} available' : 'unavailable'}',
+                  child: InkWell(
+                    onTap: onTap,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        EquipmentImage(imageUrl: equipment.imageUrl, radius: 0),
+                        Positioned(
+                          left: 8,
+                          top: 8,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.94),
+                              borderRadius: BorderRadius.circular(11),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 6,
+                              ),
+                              child: Text(
+                                equipment.isAvailable
+                                    ? '${equipment.available} available'
+                                    : 'Unavailable',
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      color: availabilityColor,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (selected)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              width: 30,
+                              height: 30,
+                              decoration: const BoxDecoration(
+                                color: AppColors.universityRed,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.check_rounded,
+                                size: 18,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 5,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        equipment.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: AppColors.darkText,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        equipment.category,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.mutedText,
+                        ),
+                      ),
+                      const Spacer(),
+                      Row(
+                        children: [
+                          TextButton(
+                            onPressed: onTap,
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(48, 48),
+                            ),
+                            child: const Text('Details'),
+                          ),
+                          const Spacer(),
+                          if (selected)
+                            QuantityStepper(
+                              quantity: quantity,
+                              maximum: equipment.available,
+                              onChanged: onQuantityChanged,
+                            )
+                          else
+                            IconButton(
+                              tooltip: 'Add ${equipment.name} to request',
+                              onPressed: equipment.isAvailable
+                                  ? () => onQuantityChanged(1)
+                                  : null,
+                              icon: const Icon(Icons.add_circle_outline),
+                              color: AppColors.universityRed,
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyCatalog extends StatelessWidget {
+  final String query;
+
+  const _EmptyCatalog({required this.query});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.search_off_rounded,
+              size: 36,
+              color: AppColors.mutedText,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              query.isEmpty ? 'No equipment listed yet' : 'No matches found',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: AppColors.darkText,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              query.isEmpty
+                  ? 'Check back later for available equipment.'
+                  : 'Try another equipment name or category.',
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.mutedText),
+            ),
+          ],
+        ),
       ),
     );
   }
