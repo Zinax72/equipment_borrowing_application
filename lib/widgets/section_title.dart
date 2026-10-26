@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/constants.dart';
 
 class SectionTitle extends StatelessWidget {
   final String title;
@@ -13,10 +14,19 @@ class SectionTitle extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            color: AppColors.darkText,
+            fontWeight: FontWeight.w800,
+          ),
         ),
         const SizedBox(height: 4),
-        Text(subtitle, style: const TextStyle(color: Colors.grey, height: 1.3)),
+        Text(
+          subtitle,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppColors.mutedText,
+            height: 1.4,
+          ),
+        ),
       ],
     );
   }

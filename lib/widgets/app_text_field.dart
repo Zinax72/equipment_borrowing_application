@@ -39,6 +39,7 @@ class AppTextField extends StatelessWidget {
         labelText: label,
         hintText: hint,
         prefixIcon: Icon(icon),
+        alignLabelWithHint: maxLines > 1,
         counterText: maxLength != null ? null : '',
       ),
     );

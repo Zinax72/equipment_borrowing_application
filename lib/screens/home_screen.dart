@@ -6,12 +6,14 @@ import '../models/request_status.dart';
 import '../services/firestore_service.dart';
 import '../utils/constants.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/borrowit_logo.dart';
 import 'borrow_form_screen.dart';
 import 'dashboard_screen.dart';
 import 'equipment_list_screen.dart';
 import 'history_screen.dart';
 import 'my_requests_screen.dart';
 import 'dart:async';
+import 'dart:ui';
 import '../services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -23,7 +25,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int selectedIndex = 0;
-  final List<String> selectedEquipment = [];
+  final Map<String, int> selectedEquipment = {};
 
   final _firestore = FirestoreService();
   late final Stream<List<Equipment>> _equipmentStream = _firestore
@@ -58,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
             requestId: r.id,
             title: 'Request ${r.status.label}',
             body:
-                '${r.equipment.join(', ')} is now ${r.status.label.toLowerCase()}.',
+                '${r.equipmentSummary} is now ${r.status.label.toLowerCase()}.',
           );
           if (r.status == RequestStatus.returned) {
             NotificationService.instance.cancelReminder(r.id);
@@ -76,12 +78,12 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void toggleEquipment(String equipmentName) {
+  void setEquipmentQuantity(String equipmentName, int quantity) {
     setState(() {
-      if (selectedEquipment.contains(equipmentName)) {
+      if (quantity <= 0) {
         selectedEquipment.remove(equipmentName);
       } else {
-        selectedEquipment.add(equipmentName);
+        selectedEquipment[equipmentName] = quantity;
       }
     });
   }
@@ -105,9 +107,12 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => EquipmentListScreen(
+          selectedEquipment: selectedEquipment,
+          onQuantityChanged: setEquipmentQuantity,
           onBorrow: (equipment) {
-            if (!selectedEquipment.contains(equipment.name)) {
-              toggleEquipment(equipment.name);
+            final currentQuantity = selectedEquipment[equipment.name] ?? 0;
+            if (currentQuantity < equipment.available) {
+              setEquipmentQuantity(equipment.name, currentQuantity + 1);
             }
             changePage(1);
           },
@@ -120,82 +125,111 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'BorrowIT',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+            child: ColoredBox(color: AppColors.canvas.withValues(alpha: 0.72)),
+          ),
         ),
-        foregroundColor: Colors.white,
-        backgroundColor: AppColors.universityRed,
-        elevation: 0,
+        title: const BorrowItLogo(compact: true),
+        leading: IconButton(
+          tooltip: 'Open navigation menu',
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => AppDrawer.show(
+            context,
+            currentIndex: selectedIndex,
+            onNavigate: changePage,
+            onOpenHistory: openHistory,
+          ),
+        ),
         actions: [
           IconButton(
             tooltip: 'Borrowing History',
-            icon: const Icon(Icons.history),
+            icon: const Icon(Icons.history_rounded),
             onPressed: openHistory,
           ),
         ],
       ),
-      drawer: AppDrawer(
-        currentIndex: selectedIndex,
-        onNavigate: (index) {
-          Navigator.pop(context);
-          changePage(index);
-        },
-        onOpenHistory: () {
-          Navigator.pop(context);
-          openHistory();
-        },
-      ),
-      body: StreamBuilder<List<BorrowRequest>>(
-        stream: _requestsStream,
-        builder: (context, snapshot) {
-          final pendingCount = (snapshot.data ?? [])
-              .where((r) => r.status == RequestStatus.pending)
-              .length;
+      body: Stack(
+        children: [
+          const Positioned.fill(child: CampusBackdrop()),
+          StreamBuilder<List<BorrowRequest>>(
+            stream: _requestsStream,
+            builder: (context, snapshot) {
+              final pendingCount = (snapshot.data ?? [])
+                  .where((r) => r.status == RequestStatus.pending)
+                  .length;
 
-          return IndexedStack(
-            index: selectedIndex,
-            children: [
-              DashboardScreen(
-                equipmentStream: _equipmentStream,
-                onBorrowPressed: () => changePage(1),
-                onViewAllPressed: openEquipmentList,
-                selectedEquipment: selectedEquipment,
-                onEquipmentChanged: toggleEquipment,
-                approvalCount: pendingCount,
-              ),
-              BorrowFormScreen(
-                selectedEquipment: selectedEquipment,
-                onEquipmentChanged: toggleEquipment,
-                onSubmitted: onRequestSubmitted,
-              ),
-              const MyRequestsScreen(),
-            ],
-          );
-        },
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: selectedIndex,
-        onTap: changePage,
-        selectedItemColor: AppColors.universityRed,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assignment_outlined),
-            activeIcon: Icon(Icons.assignment),
-            label: 'Borrow',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history_outlined),
-            activeIcon: Icon(Icons.history),
-            label: 'Requests',
+              return IndexedStack(
+                index: selectedIndex,
+                children: [
+                  DashboardScreen(
+                    equipmentStream: _equipmentStream,
+                    onBorrowPressed: () => changePage(1),
+                    onViewAllPressed: openEquipmentList,
+                    selectedEquipment: selectedEquipment,
+                    onQuantityChanged: setEquipmentQuantity,
+                    approvalCount: pendingCount,
+                  ),
+                  BorrowFormScreen(
+                    selectedEquipment: selectedEquipment,
+                    onQuantityChanged: setEquipmentQuantity,
+                    onSubmitted: onRequestSubmitted,
+                  ),
+                  const MyRequestsScreen(),
+                ],
+              );
+            },
           ),
         ],
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 8),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(32),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.88),
+                  borderRadius: BorderRadius.circular(32),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.darkText.withValues(alpha: 0.12),
+                      blurRadius: 28,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: NavigationBar(
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: changePage,
+                  destinations: const [
+                    NavigationDestination(
+                      icon: Icon(Icons.grid_view_outlined),
+                      selectedIcon: Icon(Icons.grid_view_rounded),
+                      label: 'Dashboard',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.add_box_outlined),
+                      selectedIcon: Icon(Icons.add_box_rounded),
+                      label: 'Borrow',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.receipt_long_outlined),
+                      selectedIcon: Icon(Icons.receipt_long_rounded),
+                      label: 'Requests',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

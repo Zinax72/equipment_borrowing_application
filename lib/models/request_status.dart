@@ -19,26 +19,26 @@ extension RequestStatusX on RequestStatus {
   Color get color {
     switch (this) {
       case RequestStatus.pending:
-        return const Color(0xFFFFA000);
+        return const Color(0xFF9A6415);
       case RequestStatus.approved:
-        return const Color(0xFF1976D2);
+        return const Color(0xFF356A9B);
       case RequestStatus.borrowed:
-        return const Color(0xFF7B1FA2);
+        return const Color(0xFF745293);
       case RequestStatus.returned:
-        return const Color(0xFF2E7D32);
+        return const Color(0xFF34785E);
     }
   }
 
   Color get bgColor {
     switch (this) {
       case RequestStatus.pending:
-        return const Color(0xFFFFF3E0);
+        return const Color(0xFFFFF1D9);
       case RequestStatus.approved:
-        return const Color(0xFFE3F2FD);
+        return const Color(0xFFEAF2F8);
       case RequestStatus.borrowed:
-        return const Color(0xFFF3E5F5);
+        return const Color(0xFFF1ECF5);
       case RequestStatus.returned:
-        return const Color(0xFFE8F5E9);
+        return const Color(0xFFE8F2ED);
     }
   }
 }

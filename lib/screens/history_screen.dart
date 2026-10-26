@@ -5,6 +5,7 @@ import '../models/request_status.dart';
 import '../services/firestore_service.dart';
 import '../utils/constants.dart';
 import '../widgets/request_card.dart';
+import '../widgets/section_title.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -20,65 +21,78 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Borrowing History'),
-        backgroundColor: AppColors.universityRed,
-        foregroundColor: Colors.white,
-      ),
-      body: StreamBuilder<List<BorrowRequest>>(
-        stream: _stream,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return const Center(child: Text('Could not load your history.'));
-          }
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      appBar: AppBar(title: const Text('Borrowing history')),
+      body: SafeArea(
+        child: StreamBuilder<List<BorrowRequest>>(
+          stream: _stream,
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return const Center(child: Text('Could not load your history.'));
+            }
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          final history = snapshot.data!
-              .where((r) => r.status == RequestStatus.returned)
-              .toList();
+            final history = snapshot.data!
+                .where((request) => request.status == RequestStatus.returned)
+                .toList();
 
-          if (history.isEmpty) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(30),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.history,
-                      size: 50,
-                      color: AppColors.universityRed,
-                    ),
-                    SizedBox(height: 12),
-                    Text(
-                      'No borrowing history yet',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      'Completed (returned) transactions will appear here.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ],
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+              children: [
+                const SectionTitle(
+                  title: 'Borrowing history',
+                  subtitle: 'Your completed equipment returns.',
                 ),
-              ),
+                const SizedBox(height: 20),
+                if (history.isEmpty)
+                  _HistoryEmptyState()
+                else
+                  ...history.map((request) => RequestCard(request: request)),
+              ],
             );
-          }
+          },
+        ),
+      ),
+    );
+  }
+}
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(18),
-            itemCount: history.length,
-            itemBuilder: (context, index) {
-              return RequestCard(request: history[index]);
-            },
-          );
-        },
+class _HistoryEmptyState extends StatelessWidget {
+  const _HistoryEmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 28),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Column(
+        children: [
+          const Icon(
+            Icons.history_rounded,
+            size: 32,
+            color: AppColors.universityRed,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Nothing returned yet',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColors.darkText,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'Completed requests will appear here.',
+            textAlign: TextAlign.center,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.mutedText),
+          ),
+        ],
       ),
     );
   }
