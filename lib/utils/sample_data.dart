@@ -41,7 +41,7 @@ const List<Map<String, dynamic>> sampleEquipment = [
     'available': 15,
     'description': 'Extension cord for approved university activities.',
     'imageUrl':
-        'https://images.unsplash.com/photo-1601999009162-25d5f4d3f4b8?w=600',
+        'https://images.unsplash.com/photo-1650501386688-41f6d0251875?w=600',
   },
   {
     'name': 'HDMI Cable',

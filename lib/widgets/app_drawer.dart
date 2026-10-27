@@ -1,10 +1,10 @@
 import 'dart:ui';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/notification_service.dart';
 import '../utils/constants.dart';
+import 'borrowit_logo.dart';
 
 class AppDrawer {
   const AppDrawer._();
@@ -23,7 +23,7 @@ class AppDrawer {
       transitionDuration: const Duration(milliseconds: 220),
       pageBuilder: (dialogContext, animation, secondaryAnimation) {
         final mediaQuery = MediaQuery.of(dialogContext);
-        final drawerWidth = (mediaQuery.size.width - 48).clamp(0.0, 380.0);
+        final drawerWidth = (mediaQuery.size.width - 48).clamp(0.0, 360.0);
         final drawerHeight =
             mediaQuery.size.height - mediaQuery.padding.vertical - 24;
         final user = FirebaseAuth.instance.currentUser;
@@ -49,9 +49,9 @@ class AppDrawer {
                 child: GestureDetector(
                   onTap: () => Navigator.of(dialogContext).pop(),
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                     child: ColoredBox(
-                      color: AppColors.darkText.withValues(alpha: 0.24),
+                      color: AppColors.darkText.withValues(alpha: 0.22),
                     ),
                   ),
                 ),
@@ -68,119 +68,167 @@ class AppDrawer {
                     child: SizedBox(
                       width: drawerWidth.toDouble(),
                       height: drawerHeight.clamp(0.0, mediaQuery.size.height),
-                      child: NavigationDrawer(
-                        selectedIndex: currentIndex,
-                        onDestinationSelected: (index) {
-                          closeAnd(() => onNavigate(index));
-                        },
-                        backgroundColor: Colors.white,
-                        surfaceTintColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        indicatorColor: AppColors.goldWash,
-                        indicatorShape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-                            child: Row(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(28),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.86),
+                              borderRadius: BorderRadius.circular(28),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.9),
+                                width: 1.2,
+                              ),
+                            ),
+                            child: NavigationDrawer(
+                              selectedIndex: currentIndex,
+                              onDestinationSelected: (index) {
+                                closeAnd(() => onNavigate(index));
+                              },
+                              backgroundColor: Colors.transparent,
+                              surfaceTintColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              indicatorColor: AppColors.universityRed
+                                  .withValues(alpha: 0.12),
+                              indicatorShape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
                               children: [
-                                CircleAvatar(
-                                  radius: 28,
-                                  backgroundColor: AppColors.goldWash,
-                                  foregroundColor: AppColors.universityRed,
-                                  child: Text(
-                                    initials.isEmpty ? 'B' : initials,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 17,
+                                const Padding(
+                                  padding: EdgeInsets.fromLTRB(20, 22, 20, 6),
+                                  child: BorrowItLogo(compact: true),
+                                ),
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.7),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: AppColors.gold
+                                            .withValues(alpha: 0.45),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 24,
+                                          backgroundColor: AppColors.universityRed,
+                                          foregroundColor: AppColors.brightGold,
+                                          child: Text(
+                                            initials.isEmpty ? 'B' : initials,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                displayName,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: Theme.of(dialogContext)
+                                                    .textTheme
+                                                    .titleSmall
+                                                    ?.copyWith(
+                                                      color: AppColors.darkText,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                    ),
+                                              ),
+                                              if (user?.email
+                                                  case final email?)
+                                                Text(
+                                                  email,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: Theme.of(dialogContext)
+                                                      .textTheme
+                                                      .bodySmall
+                                                      ?.copyWith(
+                                                        color:
+                                                            AppColors.mutedText,
+                                                      ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        displayName,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: Theme.of(dialogContext)
-                                            .textTheme
-                                            .titleMedium
-                                            ?.copyWith(
-                                              color: AppColors.darkText,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                      ),
-                                      if (user?.email case final email?)
-                                        Text(
-                                          email,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(dialogContext)
-                                              .textTheme
-                                              .bodySmall
-                                              ?.copyWith(
-                                                color: AppColors.mutedText,
-                                              ),
-                                        ),
-                                    ],
+                                const NavigationDrawerDestination(
+                                  icon: Icon(Icons.grid_view_outlined),
+                                  selectedIcon: Icon(Icons.grid_view_rounded),
+                                  label: Text('Equipment Catalog'),
+                                ),
+                                const NavigationDrawerDestination(
+                                  icon: Icon(Icons.shopping_basket_outlined),
+                                  selectedIcon:
+                                      Icon(Icons.shopping_basket_rounded),
+                                  label: Text('Borrowing Basket'),
+                                ),
+                                const NavigationDrawerDestination(
+                                  icon: Icon(Icons.timeline_outlined),
+                                  selectedIcon: Icon(Icons.timeline_rounded),
+                                  label: Text('Request Management'),
+                                ),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 12,
                                   ),
+                                  child: Divider(height: 1),
+                                ),
+                                ListTile(
+                                  minLeadingWidth: 24,
+                                  leading: const Icon(
+                                    Icons.history_rounded,
+                                    color: AppColors.universityRed,
+                                  ),
+                                  title: const Text('Borrowing History Log'),
+                                  onTap: () => closeAnd(onOpenHistory),
+                                ),
+                                ListTile(
+                                  minLeadingWidth: 24,
+                                  leading: const Icon(
+                                    Icons.notifications_active_outlined,
+                                    color: AppColors.universityRed,
+                                  ),
+                                  title: const Text('Test Notification'),
+                                  subtitle:
+                                      const Text('Send a sample status alert'),
+                                  onTap: () {
+                                    closeAnd(() {
+                                      NotificationService.instance.sendTest();
+                                    });
+                                  },
+                                ),
+                                ListTile(
+                                  minLeadingWidth: 24,
+                                  leading: const Icon(
+                                    Icons.logout_rounded,
+                                    color: AppColors.brightRed,
+                                  ),
+                                  title: const Text('Sign out'),
+                                  onTap: () =>
+                                      closeAnd(() => AuthService().logout()),
                                 ),
                               ],
                             ),
                           ),
-                          const NavigationDrawerDestination(
-                            icon: Icon(Icons.grid_view_outlined),
-                            selectedIcon: Icon(Icons.grid_view_rounded),
-                            label: Text('Dashboard'),
-                          ),
-                          const NavigationDrawerDestination(
-                            icon: Icon(Icons.add_box_outlined),
-                            selectedIcon: Icon(Icons.add_box_rounded),
-                            label: Text('Borrow equipment'),
-                          ),
-                          const NavigationDrawerDestination(
-                            icon: Icon(Icons.receipt_long_outlined),
-                            selectedIcon: Icon(Icons.receipt_long_rounded),
-                            label: Text('My requests'),
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 10,
-                            ),
-                            child: Divider(height: 1),
-                          ),
-                          ListTile(
-                            minLeadingWidth: 24,
-                            leading: const Icon(Icons.history_rounded),
-                            title: const Text('Borrowing history'),
-                            onTap: () => closeAnd(onOpenHistory),
-                          ),
-                          ListTile(
-                            minLeadingWidth: 24,
-                            leading: const Icon(
-                              Icons.notifications_active_outlined,
-                            ),
-                            title: const Text('Test notification'),
-                            subtitle: const Text('Send a quick test'),
-                            onTap: () {
-                              closeAnd(() {
-                                NotificationService.instance.sendTest();
-                              });
-                            },
-                          ),
-                          ListTile(
-                            minLeadingWidth: 24,
-                            leading: const Icon(Icons.logout_rounded),
-                            title: const Text('Log out'),
-                            onTap: () => closeAnd(() => AuthService().logout()),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),

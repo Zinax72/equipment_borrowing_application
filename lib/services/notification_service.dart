@@ -11,7 +11,6 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
   bool _ready = false;
 
-  // Only Android is set up, so Chrome/Windows safely skip everything.
   bool get _supported =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
@@ -25,7 +24,6 @@ class NotificationService {
     ),
   );
 
-  // Each request gets two ids: one for status, one for the reminder.
   int _statusId(String requestId) => (requestId.hashCode & 0x3fffffff) * 2;
   int _reminderId(String requestId) => _statusId(requestId) + 1;
 
@@ -39,7 +37,6 @@ class NotificationService {
     );
     await _plugin.initialize(settings: settings);
 
-    // Android 13+ asks the user for permission.
     await _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
@@ -63,7 +60,6 @@ class NotificationService {
     );
   }
 
-  // Reminder at 8:00 AM (device time) on the return date.
   Future<void> scheduleReturnReminder({
     required String requestId,
     required List<String> equipment,
@@ -89,7 +85,6 @@ class NotificationService {
     await _plugin.cancel(id: _reminderId(requestId));
   }
 
-  // For the drawer's "Test notification" tile.
   Future<void> sendTest() async {
     if (!_ready) return;
 

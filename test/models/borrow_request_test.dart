@@ -1,5 +1,5 @@
-import 'package:equipment_barrowing_application/models/borrow_request.dart';
-import 'package:equipment_barrowing_application/models/request_status.dart';
+import 'package:equipment_borrowing_application/models/borrow_request.dart';
+import 'package:equipment_borrowing_application/models/request_status.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 BorrowRequest _request({
@@ -30,7 +30,7 @@ void main() {
         quantities: {'Camera': 2, 'Extension Cord': 1},
       );
 
-      expect(request.equipmentSummary, 'Camera × 2, Extension Cord');
+      expect(request.equipmentSummary, 'Camera \u00D7 2, Extension Cord');
       expect(request.toMap()['equipment'], ['Camera', 'Extension Cord']);
       expect(request.toMap()['equipmentQuantities'], {
         'Camera': 2,
@@ -47,7 +47,7 @@ void main() {
         'Camera': 2,
         'Extension Cord': 1,
       });
-      expect(request.equipmentSummary, 'Camera × 2, Extension Cord');
+      expect(request.equipmentSummary, 'Camera \u00D7 2, Extension Cord');
     });
   });
 }

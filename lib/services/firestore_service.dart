@@ -13,7 +13,6 @@ class FirestoreService {
   CollectionReference<Map<String, dynamic>> get _requests =>
       _db.collection('requests');
 
-  // ---------- Equipment ----------
 
   Stream<List<Equipment>> equipmentStream() {
     return _equipment
@@ -23,42 +22,48 @@ class FirestoreService {
   }
 
   Future<void> seedEquipmentIfEmpty() async {
-    final existing = await _equipment.limit(1).get();
-    if (existing.docs.isNotEmpty) return;
-
-    final batch = _db.batch();
-    for (final item in sampleEquipment) {
-      batch.set(_equipment.doc(), item);
+    final existing = await _equipment.get();
+    if (existing.docs.isEmpty) {
+      final batch = _db.batch();
+      for (final item in sampleEquipment) {
+        batch.set(_equipment.doc(), item);
+      }
+      await batch.commit();
+      return;
     }
-    await batch.commit();
+
+    for (final doc in existing.docs) {
+      final data = doc.data();
+      if (data['name'] == 'Extension Cord' &&
+          (data['imageUrl'] as String? ?? '').contains('1601999009162')) {
+        await doc.reference.update({
+          'imageUrl':
+              'https://images.unsplash.com/photo-1650501386688-41f6d0251875?w=600',
+        });
+      }
+    }
   }
 
-  // ---------- Requests ----------
 
-  // Create (returns the new request's id)
   Future<String> addRequest(BorrowRequest request) async {
     final doc = await _requests.add(request.toMap());
     return doc.id;
   }
 
-  // Read (only this user's requests, newest first)
   Stream<List<BorrowRequest>> requestsStream(String userId) {
     return _requests.where('userId', isEqualTo: userId).snapshots().map((
       snapshot,
     ) {
       final list = snapshot.docs.map(BorrowRequest.fromDoc).toList();
-      // Sorted here instead of in the query, so no Firestore index is needed.
       list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return list;
     });
   }
 
-  // Update
   Future<void> updateStatus(String id, RequestStatus status) {
     return _requests.doc(id).update({'status': status.name});
   }
 
-  // Delete
   Future<void> deleteRequest(String id) {
     return _requests.doc(id).delete();
   }

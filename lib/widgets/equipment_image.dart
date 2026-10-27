@@ -15,6 +15,13 @@ class EquipmentImage extends StatelessWidget {
     this.radius = 12,
   });
 
+  String get _effectiveUrl {
+    if (imageUrl.contains('1601999009162')) {
+      return 'https://images.unsplash.com/photo-1650501386688-41f6d0251875?w=600';
+    }
+    return imageUrl;
+  }
+
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
@@ -23,7 +30,7 @@ class EquipmentImage extends StatelessWidget {
         height: height,
         width: width ?? double.infinity,
         child: Image.network(
-          imageUrl,
+          _effectiveUrl,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
             return Container(
