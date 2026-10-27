@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
-enum RequestStatus { pending, approved, borrowed, returned }
+// Possible lifecycle states of a borrowing request.
+enum RequestStatus { pending, approved, borrowed, returned, rejected }
 
+// Helper properties (label, description, icon, and colors) for each RequestStatus.
 extension RequestStatusX on RequestStatus {
+  // Display name shown on chips and filters.
   String get label {
     switch (this) {
       case RequestStatus.pending:
@@ -13,6 +16,8 @@ extension RequestStatusX on RequestStatus {
         return 'Borrowed';
       case RequestStatus.returned:
         return 'Returned';
+      case RequestStatus.rejected:
+        return 'Rejected';
     }
   }
 
@@ -26,6 +31,8 @@ extension RequestStatusX on RequestStatus {
         return 'Currently checked out';
       case RequestStatus.returned:
         return 'Returned & verified';
+      case RequestStatus.rejected:
+        return 'Request declined';
     }
   }
 
@@ -39,32 +46,40 @@ extension RequestStatusX on RequestStatus {
         return Icons.outbound_outlined;
       case RequestStatus.returned:
         return Icons.task_alt_rounded;
+      case RequestStatus.rejected:
+        return Icons.cancel_outlined;
     }
   }
 
+  // Foreground/text color for each status badge.
   Color get color {
     switch (this) {
       case RequestStatus.pending:
         return const Color(0xFFB26B00);
       case RequestStatus.approved:
-        return const Color(0xFF1F6E8C);
+        return const Color(0xFF287D5C);
       case RequestStatus.borrowed:
         return const Color(0xFF7A132F);
       case RequestStatus.returned:
-        return const Color(0xFF287D5C);
+        return const Color(0xFF1F6E8C);
+      case RequestStatus.rejected:
+        return const Color(0xFFC22952);
     }
   }
 
+  // Light background tint for each status badge.
   Color get bgColor {
     switch (this) {
       case RequestStatus.pending:
         return const Color(0xFFFFF4DC);
       case RequestStatus.approved:
-        return const Color(0xFFE6F4F9);
+        return const Color(0xFFE6F5EE);
       case RequestStatus.borrowed:
         return const Color(0xFFFBECEF);
       case RequestStatus.returned:
-        return const Color(0xFFE6F5EE);
+        return const Color(0xFFE6F4F9);
+      case RequestStatus.rejected:
+        return const Color(0xFFFDECEF);
     }
   }
 }

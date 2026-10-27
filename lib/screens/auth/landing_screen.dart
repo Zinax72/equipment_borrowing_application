@@ -8,6 +8,7 @@ import '../../widgets/glass_panel.dart';
 import '../../widgets/status_chip.dart';
 import 'auth_screen.dart';
 
+// Welcome screen for BulSU students with animated preview card and Sign In / Create Account buttons.
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
 
@@ -17,11 +18,13 @@ class LandingScreen extends StatefulWidget {
 
 class _LandingScreenState extends State<LandingScreen>
     with TickerProviderStateMixin {
+  // Controls the staggered fade-in entrance animation.
   late final AnimationController _intro = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1200),
   )..forward();
 
+  // Controls the gentle up-and-down floating animation on the preview card.
   late final AnimationController _float = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 4),
@@ -56,6 +59,7 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
+  // Opens AuthScreen in either Sign In or Register mode with a smooth fade+slide transition.
   void _openAuth(AuthMode mode) {
     Navigator.of(context).push(
       PageRouteBuilder(
@@ -144,6 +148,7 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
+  // Top header showing the BorrowIT logo and Student Portal badge.
   Widget _topBar() {
     return Row(
       children: [
@@ -181,6 +186,7 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
+  // Sample glassmorphic request card preview that floats gently in the hero area.
   Widget _floatingPreview() {
     return AnimatedBuilder(
       animation: _float,
@@ -314,6 +320,7 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
+  // Main BulSU headline and subtitle text on the landing page.
   Widget _headline(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,6 +382,7 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
+  // Three mini feature cards highlighting Batch requests, Live tracking, and Return reminders.
   Widget _featureRow() {
     const features = [
       (Icons.shopping_basket_outlined, 'Batch\nrequests'),
@@ -419,6 +427,7 @@ class _LandingScreenState extends State<LandingScreen>
     );
   }
 
+  // Primary action buttons to open Sign In or Create an Account.
   Widget _actions() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

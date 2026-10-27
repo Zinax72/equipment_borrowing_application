@@ -1,3 +1,4 @@
+// Default campus equipment items seeded into Firestore when the database is empty.
 const List<Map<String, dynamic>> sampleEquipment = [
   {
     'name': 'Projector',

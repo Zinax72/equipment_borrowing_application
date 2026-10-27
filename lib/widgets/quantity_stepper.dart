@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 
+// Plus/minus pill control for adjusting how many units of an item to borrow.
 class QuantityStepper extends StatelessWidget {
   final int quantity;
   final int maximum;

@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+// Manages local Android notifications for status updates and return date reminders.
 class NotificationService {
   NotificationService._();
   static final NotificationService instance = NotificationService._();
@@ -27,6 +28,7 @@ class NotificationService {
   int _statusId(String requestId) => (requestId.hashCode & 0x3fffffff) * 2;
   int _reminderId(String requestId) => _statusId(requestId) + 1;
 
+  // Sets up timezone data, initializes the plugin, and asks for notification permission.
   Future<void> init() async {
     if (!_supported) return;
 
@@ -46,6 +48,7 @@ class NotificationService {
     _ready = true;
   }
 
+  // Shows an immediate notification when a request is submitted or changes status.
   Future<void> showNow({
     required String requestId,
     required String title,
@@ -60,6 +63,7 @@ class NotificationService {
     );
   }
 
+  // Schedules a reminder notification at 8:00 AM on the equipment return date.
   Future<void> scheduleReturnReminder({
     required String requestId,
     required List<String> equipment,
@@ -80,11 +84,13 @@ class NotificationService {
     );
   }
 
+  // Cancels a scheduled return reminder (used when returned, rejected, or withdrawn).
   Future<void> cancelReminder(String requestId) async {
     if (!_ready) return;
     await _plugin.cancel(id: _reminderId(requestId));
   }
 
+  // Sends a test notification from the drawer menu.
   Future<void> sendTest() async {
     if (!_ready) return;
 

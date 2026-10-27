@@ -8,6 +8,7 @@ import '../widgets/equipment_image.dart';
 import '../widgets/glass_panel.dart';
 import '../widgets/quantity_stepper.dart';
 
+// Detailed view for a single piece of equipment with specs and quantity selector.
 class EquipmentDetailsScreen extends StatefulWidget {
   final Equipment equipment;
   final VoidCallback onBorrow;
@@ -35,6 +36,7 @@ class _EquipmentDetailsScreenState extends State<EquipmentDetailsScreen> {
     _quantity = widget.initialQuantity > 0 ? widget.initialQuantity : 1;
   }
 
+  // Generates a readable BulSU asset tag (e.g. BULSU-AUD-601) from category and name.
   String get _assetCode {
     final prefix = widget.equipment.category.isNotEmpty
         ? widget.equipment.category
@@ -50,6 +52,7 @@ class _EquipmentDetailsScreenState extends State<EquipmentDetailsScreen> {
     return 'BULSU-$shortPrefix-$hash';
   }
 
+  // Saves the chosen quantity into the Borrowing Basket and returns to the catalog.
   void _handleAddToRequest() {
     if (widget.onQuantityChanged != null) {
       widget.onQuantityChanged!(_quantity);

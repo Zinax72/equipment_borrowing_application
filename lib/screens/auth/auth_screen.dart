@@ -6,6 +6,7 @@ import '../../widgets/auth_backdrop.dart';
 import '../../widgets/borrowit_logo.dart';
 import '../../widgets/glass_panel.dart';
 
+// Unified authentication screen that switches between Sign In and Student Registration.
 enum AuthMode { signIn, register }
 
 class AuthScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
+  // Controllers and state for the login/registration form.
   var _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -32,14 +34,6 @@ class _AuthScreenState extends State<AuthScreen> {
   bool get _isRegister => _mode == AuthMode.register;
 
   @override
-  void initState() {
-    super.initState();
-    _passwordController.addListener(() {
-      if (_isRegister) setState(() {});
-    });
-  }
-
-  @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
@@ -48,6 +42,7 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
+  // Switches between Sign In and Register tabs and resets form validation.
   void _setMode(AuthMode mode) {
     if (mode == _mode || _loading) return;
     FocusScope.of(context).unfocus();
@@ -62,6 +57,7 @@ class _AuthScreenState extends State<AuthScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
+  // Validates inputs and either registers a new student (then switches to Sign In) or logs in.
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
@@ -74,13 +70,24 @@ class _AuthScreenState extends State<AuthScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+        if (!mounted) return;
+        // After registering, switch back to Sign In so the user logs in with their new account.
+        setState(() {
+          _mode = AuthMode.signIn;
+          _passwordController.clear();
+          _confirmController.clear();
+          _formKey = GlobalKey<FormState>();
+        });
+        _showMessage(
+          'Account created! Please sign in with your newly registered account.',
+        );
       } else {
         await _authService.login(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+        if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
       }
-      if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
     } on FirebaseAuthException catch (e) {
       if (mounted) _showMessage(AuthService.messageFor(e));
     } finally {
@@ -88,6 +95,7 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
+  // Sends a Firebase password reset email to the entered address.
   Future<void> _forgotPassword() async {
     final email = _emailController.text.trim();
     if (!email.contains('@')) {
@@ -100,17 +108,6 @@ class _AuthScreenState extends State<AuthScreen> {
     } on FirebaseAuthException catch (e) {
       if (mounted) _showMessage(AuthService.messageFor(e));
     }
-  }
-
-  int get _passwordScore {
-    final p = _passwordController.text;
-    if (p.isEmpty) return 0;
-    var score = 0;
-    if (p.length >= 8) score++;
-    if (RegExp(r'[a-z]').hasMatch(p) && RegExp(r'[A-Z]').hasMatch(p)) score++;
-    if (RegExp(r'\d').hasMatch(p)) score++;
-    if (RegExp(r'[^A-Za-z0-9]').hasMatch(p)) score++;
-    return score == 0 ? 1 : score;
   }
 
   @override
@@ -248,6 +245,7 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
+  // Glassmorphic card containing the Sign In / Register toggle and input fields.
   Widget _formCard() {
     return GlassPanel(
       padding: const EdgeInsets.all(20),
@@ -354,29 +352,22 @@ class _AuthScreenState extends State<AuthScreen> {
               _Collapsible(
                 visible: _isRegister,
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _StrengthMeter(score: _passwordScore),
-                      const SizedBox(height: 14),
-                      _AuthField(
-                        controller: _confirmController,
-                        label: 'Confirm password',
-                        hint: 'Re-enter your password',
-                        icon: Icons.lock_reset_rounded,
-                        obscure: _hidePassword,
-                        textInputAction: TextInputAction.done,
-                        onSubmitted: (_) => _submit(),
-                        validator: (value) {
-                          if (!_isRegister) return null;
-                          if (value != _passwordController.text) {
-                            return 'Passwords do not match';
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
+                  padding: const EdgeInsets.only(top: 14),
+                  child: _AuthField(
+                    controller: _confirmController,
+                    label: 'Confirm password',
+                    hint: 'Re-enter your password',
+                    icon: Icons.lock_reset_rounded,
+                    obscure: _hidePassword,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _submit(),
+                    validator: (value) {
+                      if (!_isRegister) return null;
+                      if (value != _passwordController.text) {
+                        return 'Passwords do not match';
+                      }
+                      return null;
+                    },
                   ),
                 ),
               ),
@@ -587,58 +578,6 @@ class _AuthField extends StatelessWidget {
         prefixIcon: Icon(icon, color: AppColors.universityRed, size: 20),
         suffixIcon: suffix,
       ),
-    );
-  }
-}
-
-class _StrengthMeter extends StatelessWidget {
-  final int score;
-
-  const _StrengthMeter({required this.score});
-
-  @override
-  Widget build(BuildContext context) {
-    const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
-    const colors = [
-      Colors.transparent,
-      AppColors.brightRed,
-      Color(0xFFD9822B),
-      Color(0xFF4C9A2A),
-      AppColors.green,
-    ];
-    final color = colors[score];
-
-    return Row(
-      children: [
-        for (var i = 1; i <= 4; i++) ...[
-          Expanded(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              height: 4,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(999),
-                color: i <= score
-                    ? color
-                    : AppColors.darkText.withValues(alpha: 0.10),
-              ),
-            ),
-          ),
-          const SizedBox(width: 5),
-        ],
-        const SizedBox(width: 4),
-        SizedBox(
-          width: 52,
-          child: Text(
-            score == 0 ? 'Strength' : labels[score],
-            textAlign: TextAlign.right,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              color: score == 0 ? AppColors.mutedText : color,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

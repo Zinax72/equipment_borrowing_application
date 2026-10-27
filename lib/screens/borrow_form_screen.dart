@@ -18,6 +18,7 @@ import '../widgets/quantity_stepper.dart';
 import '../widgets/review_row.dart';
 import '../widgets/section_title.dart';
 
+// 3-step Borrowing Basket screen: (1) Basket items, (2) Schedule & Purpose, (3) Photo & Submit.
 class BorrowFormScreen extends StatefulWidget {
   final Map<String, int> selectedEquipment;
   final void Function(String name, int quantity) onQuantityChanged;
@@ -35,6 +36,7 @@ class BorrowFormScreen extends StatefulWidget {
 }
 
 class _BorrowFormScreenState extends State<BorrowFormScreen> {
+  // Form controllers and state for dates, purpose, and required supporting photo.
   final _formKey = GlobalKey<FormState>();
   final _dateNeededController = TextEditingController();
   final _returnDateController = TextEditingController();
@@ -50,6 +52,7 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
   Uint8List? _imageBytes;
   bool _submitting = false;
 
+  // Quick-select preset chips for common academic/event purposes.
   static const List<String> _purposePresets = [
     'Classroom Presentation',
     'Laboratory Exercise',
@@ -89,6 +92,7 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
     return DateTime(now.year, now.month, now.day);
   }
 
+  // Opens date picker for the pickup date and resets return date if it is earlier.
   Future<void> _pickDateNeeded() async {
     final picked = await showDatePicker(
       context: context,
@@ -108,6 +112,7 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
     });
   }
 
+  // Opens date picker for the return date (must be on or after dateNeeded).
   Future<void> _pickReturnDate() async {
     if (_dateNeeded == null) {
       _showMessage('Select the date needed first.');
@@ -127,6 +132,7 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
     });
   }
 
+  // Captures or selects a supporting photo and compresses it for Firestore storage.
   Future<void> _pickImage(ImageSource source) async {
     try {
       final file = await _picker.pickImage(
@@ -205,6 +211,7 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
     );
   }
 
+  // Validates the current step before advancing to the next step.
   void _goToNextStep() {
     if (_currentStep == 0) {
       if (_selectedUnitCount == 0) {
@@ -213,18 +220,20 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
       }
       setState(() => _currentStep = 1);
     } else if (_currentStep == 1) {
+      final isValid = _formKey.currentState?.validate() ?? false;
       if (_dateNeeded == null || _returnDate == null) {
         _showMessage('Please choose both the date needed and return date.');
         return;
       }
-      if (_purposeController.text.trim().length < 5) {
-        _showMessage('Please describe the purpose (at least 5 characters).');
+      if (!isValid || _purposeController.text.trim().length < 5) {
+        _showMessage('Purpose is required (at least 5 characters).');
         return;
       }
       setState(() => _currentStep = 2);
     }
   }
 
+  // Shows a confirmation dialog summarizing all request details before final submission.
   Future<bool> _confirmDialog() async {
     final result = await showDialog<bool>(
       context: context,
@@ -276,6 +285,10 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
             ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, true),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.green,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Submit Request'),
             ),
           ],
@@ -285,6 +298,7 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
     return result ?? false;
   }
 
+  // Validates all required fields (items, dates, purpose, photo) and saves the request to Firestore.
   Future<void> _submit() async {
     if (_selectedUnitCount == 0) {
       _showMessage('Add at least one item to your Borrowing Basket.');
@@ -294,8 +308,12 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
     if (_dateNeeded == null ||
         _returnDate == null ||
         _purposeController.text.trim().length < 5) {
-      _showMessage('Complete the schedule and purpose details first.');
+      _showMessage('Complete the schedule and required purpose details first.');
       setState(() => _currentStep = 1);
+      return;
+    }
+    if (_imageBytes == null) {
+      _showMessage('Supporting photo is required before submitting.');
       return;
     }
 
@@ -789,7 +807,7 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'ACADEMIC OR EVENT PURPOSE',
+                'ACADEMIC OR EVENT PURPOSE (REQUIRED)',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -841,13 +859,16 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
               const SizedBox(height: 14),
               AppTextField(
                 controller: _purposeController,
-                label: 'Purpose details',
+                label: 'Purpose details *',
                 hint: 'Room number, course code, or campus organization event',
                 icon: Icons.notes_rounded,
                 maxLines: 3,
                 maxLength: 200,
                 validator: (value) {
-                  if (value == null || value.trim().length < 5) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Purpose is required';
+                  }
+                  if (value.trim().length < 5) {
                     return 'Please describe the purpose (at least 5 characters)';
                   }
                   return null;
@@ -962,7 +983,7 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'SUPPORTING PHOTO (OPTIONAL)',
+                'SUPPORTING PHOTO (REQUIRED)',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -972,7 +993,7 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Attach a student ID, signed room permit, or activity memo.',
+                'Attach a student ID, signed room permit, or activity memo (required).',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.mutedText,
                     ),
@@ -1075,6 +1096,7 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
                 icon: Icons.check_circle_outline_rounded,
                 onPressed: _submitting ? null : _submit,
                 loading: _submitting,
+                useGreen: true,
               ),
             ),
           ],

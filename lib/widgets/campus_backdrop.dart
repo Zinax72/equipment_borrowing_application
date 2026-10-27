@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 
+// Soft blurred BulSU background with maroon and gold ambient glow orbs used across main screens.
 class CampusBackdrop extends StatelessWidget {
   const CampusBackdrop({super.key});
 

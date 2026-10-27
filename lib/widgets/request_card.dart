@@ -7,6 +7,7 @@ import '../utils/date_format.dart';
 import 'glass_panel.dart';
 import 'status_chip.dart';
 
+// Card displaying a submitted borrowing request, its items, status timeline, dates, and photo.
 class RequestCard extends StatelessWidget {
   final BorrowRequest request;
   final ValueChanged<RequestStatus>? onStatusChanged;
@@ -154,7 +155,61 @@ class RequestCard extends StatelessWidget {
           ),
           const SizedBox(height: 18),
 
+          // Visual progress bar showing the current lifecycle stage of the request.
           _RequestLifecycleTimeline(currentStatus: request.status),
+          // If the request was rejected, display the reason provided in a red callout box.
+          if (request.status == RequestStatus.rejected &&
+              request.rejectionReason.trim().isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(13),
+              decoration: BoxDecoration(
+                color: RequestStatus.rejected.bgColor.withValues(alpha: 0.92),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: RequestStatus.rejected.color.withValues(alpha: 0.30),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.report_gmailerrorred_rounded,
+                    size: 18,
+                    color: RequestStatus.rejected.color,
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'REASON FOR REJECTION',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.7,
+                            color: RequestStatus.rejected.color,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          request.rejectionReason.trim(),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            height: 1.4,
+                            color: AppColors.darkText,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
 
           Row(
@@ -229,6 +284,7 @@ class RequestCard extends StatelessWidget {
   }
 }
 
+// Step-by-step lifecycle indicator (Pending -> Approved -> Borrowed -> Returned, or Pending -> Rejected).
 class _RequestLifecycleTimeline extends StatelessWidget {
   final RequestStatus currentStatus;
 
@@ -236,7 +292,18 @@ class _RequestLifecycleTimeline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const stages = RequestStatus.values;
+    final isRejected = currentStatus == RequestStatus.rejected;
+    final stages = isRejected
+        ? const [
+            RequestStatus.pending,
+            RequestStatus.rejected,
+          ]
+        : const [
+            RequestStatus.pending,
+            RequestStatus.approved,
+            RequestStatus.borrowed,
+            RequestStatus.returned,
+          ];
     final currentIndex = stages.indexOf(currentStatus);
 
     return Container(
@@ -263,10 +330,12 @@ class _RequestLifecycleTimeline extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(999),
                       gradient: isCompletedLine
-                          ? const LinearGradient(
+                          ? LinearGradient(
                               colors: [
                                 AppColors.universityRed,
-                                AppColors.gold,
+                                isRejected
+                                    ? RequestStatus.rejected.color
+                                    : AppColors.gold,
                               ],
                             )
                           : null,
@@ -282,6 +351,7 @@ class _RequestLifecycleTimeline extends StatelessWidget {
               final stage = stages[stageIndex];
               final isCompleted = stageIndex < currentIndex;
               final isCurrent = stageIndex == currentIndex;
+              final activeColor = stage.color;
 
               return Column(
                 mainAxisSize: MainAxisSize.min,
@@ -292,18 +362,10 @@ class _RequestLifecycleTimeline extends StatelessWidget {
                     height: isCurrent ? 28 : 22,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: isCurrent
-                          ? const LinearGradient(
-                              colors: [
-                                AppColors.universityRed,
-                                AppColors.maroonRuby,
-                              ],
-                            )
-                          : null,
-                      color: isCompleted
-                          ? AppColors.gold.withValues(alpha: 0.30)
-                          : isCurrent
-                              ? null
+                      color: isCurrent
+                          ? activeColor
+                          : isCompleted
+                              ? AppColors.gold.withValues(alpha: 0.30)
                               : AppColors.field,
                       border: Border.all(
                         color: isCurrent
@@ -316,8 +378,7 @@ class _RequestLifecycleTimeline extends StatelessWidget {
                       boxShadow: isCurrent
                           ? [
                               BoxShadow(
-                                color: AppColors.universityRed
-                                    .withValues(alpha: 0.28),
+                                color: activeColor.withValues(alpha: 0.28),
                                 blurRadius: 8,
                               ),
                             ]
@@ -352,7 +413,7 @@ class _RequestLifecycleTimeline extends StatelessWidget {
                       ? FontWeight.w800
                       : FontWeight.w500,
                   color: isCurrent
-                      ? AppColors.universityRed
+                      ? stage.color
                       : isCompleted
                           ? AppColors.darkText
                           : AppColors.mutedText,

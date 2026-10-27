@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 
+// Standard screen section header with a bold title, subtitle, and optional pill badge.
 class SectionTitle extends StatelessWidget {
   final String title;
   final String subtitle;

@@ -8,6 +8,7 @@ import '../widgets/glass_panel.dart';
 import '../widgets/summary_card.dart';
 import 'equipment_details_screen.dart';
 
+// Main catalog dashboard showing greeting, summary cards, category filters, and equipment grid.
 class DashboardScreen extends StatefulWidget {
   final Stream<List<Equipment>> equipmentStream;
   final VoidCallback onBorrowPressed;
@@ -33,6 +34,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   String _selectedCategory = 'All';
 
+  // Opens the EquipmentDetailsScreen when the user taps an equipment card.
   void _openDetails(BuildContext context, Equipment item) {
     Navigator.push(
       context,
@@ -118,6 +120,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
+                  // Top summary metrics: Available stock, items In Basket, and Pending requests.
                   Row(
                     children: [
                       Expanded(
@@ -151,6 +154,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                   const SizedBox(height: 30),
+                  // Section header for the Equipment Catalog with "Explore all" button.
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -286,6 +290,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
 
+              // Floating Borrowing Basket dock that appears when at least 1 item is selected.
               Positioned(
                 left: 16,
                 right: 16,

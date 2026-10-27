@@ -1,3 +1,4 @@
+// Formats a DateTime into a short readable string like "Oct 27, 2026".
 String formatDate(DateTime d) {
   const months = [
     'Jan',

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+// Reusable styled text input field with prefix icon, validation, and optional line/character limits.
 class AppTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;

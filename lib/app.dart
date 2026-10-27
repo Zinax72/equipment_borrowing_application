@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'screens/auth/auth_gate.dart';
 import 'utils/constants.dart';
 
+// Root widget that configures the app-wide theme, colors, input styles, and starting screen.
 class BorrowItApp extends StatelessWidget {
   const BorrowItApp({super.key});
 
@@ -13,6 +14,7 @@ class BorrowItApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: AppColors.canvas,
+        // Main BulSU color scheme (Maroon and Gold).
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.universityRed,
           primary: AppColors.universityRed,
@@ -27,6 +29,7 @@ class BorrowItApp extends StatelessWidget {
           error: AppColors.brightRed,
         ),
         fontFamily: 'Roboto',
+        // Transparent app bar style used across screens.
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           foregroundColor: AppColors.darkText,
@@ -35,6 +38,7 @@ class BorrowItApp extends StatelessWidget {
           scrolledUnderElevation: 0,
           centerTitle: false,
         ),
+        // Default styling for all text fields and forms.
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white.withValues(alpha: 0.65),
@@ -117,6 +121,7 @@ class BorrowItApp extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
           ),
         ),
+        // Bottom navigation bar colors and selected state styles.
         navigationBarTheme: NavigationBarThemeData(
           height: 68,
           elevation: 0,
@@ -145,6 +150,7 @@ class BorrowItApp extends StatelessWidget {
           }),
         ),
       ),
+      // AuthGate decides whether to show LandingScreen or HomeScreen.
       home: const AuthGate(),
     );
   }

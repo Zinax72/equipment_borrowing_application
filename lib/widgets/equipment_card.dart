@@ -6,6 +6,7 @@ import 'equipment_image.dart';
 import 'glass_panel.dart';
 import 'quantity_stepper.dart';
 
+// Catalog grid card showing equipment image, stock badge, category, and Add / Quantity stepper.
 class EquipmentCard extends StatelessWidget {
   final Equipment equipment;
   final int quantity;

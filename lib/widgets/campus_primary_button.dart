@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 
+// Reusable primary action button (supports BulSU Maroon default or palette Green for submit actions).
 class CampusPrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final bool loading;
   final IconData? icon;
   final bool compact;
+  final bool useGreen;
 
   const CampusPrimaryButton({
     super.key,
@@ -15,11 +17,17 @@ class CampusPrimaryButton extends StatelessWidget {
     this.loading = false,
     this.icon,
     this.compact = false,
+    this.useGreen = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final enabled = onPressed != null && !loading;
+    final gradientColors = useGreen
+        ? const [Color(0xFF1E6649), AppColors.green]
+        : const [AppColors.universityRed, AppColors.maroonRuby];
+    final shadowColor = useGreen ? AppColors.green : AppColors.universityRed;
+
     return Semantics(
       button: true,
       enabled: enabled,
@@ -29,8 +37,8 @@ class CampusPrimaryButton extends StatelessWidget {
         opacity: enabled ? 1 : 0.55,
         child: Container(
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.universityRed, AppColors.maroonRuby],
+            gradient: LinearGradient(
+              colors: gradientColors,
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -41,7 +49,7 @@ class CampusPrimaryButton extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.universityRed.withValues(alpha: 0.24),
+                color: shadowColor.withValues(alpha: 0.24),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),

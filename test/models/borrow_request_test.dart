@@ -1,10 +1,13 @@
 import 'package:equipment_borrowing_application/models/borrow_request.dart';
 import 'package:equipment_borrowing_application/models/request_status.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 BorrowRequest _request({
   required List<String> equipment,
   Map<String, int> quantities = const {},
+  RequestStatus status = RequestStatus.pending,
+  String rejectionReason = '',
 }) {
   return BorrowRequest(
     id: 'request-1',
@@ -17,13 +20,14 @@ BorrowRequest _request({
     dateNeeded: DateTime(2026, 10, 27),
     returnDate: DateTime(2026, 10, 28),
     photoBase64: '',
-    status: RequestStatus.pending,
+    status: status,
+    rejectionReason: rejectionReason,
     createdAt: DateTime(2026, 10, 26),
   );
 }
 
 void main() {
-  group('BorrowRequest equipment quantities', () {
+  group('BorrowRequest equipment quantities and status', () {
     test('formats and persists quantities for new requests', () {
       final request = _request(
         equipment: ['Camera', 'Extension Cord'],
@@ -48,6 +52,23 @@ void main() {
         'Extension Cord': 1,
       });
       expect(request.equipmentSummary, 'Camera \u00D7 2, Extension Cord');
+    });
+
+    test('persists rejected status and rejection reason', () {
+      final request = _request(
+        equipment: ['Camera'],
+        quantities: {'Camera': 1},
+        status: RequestStatus.rejected,
+        rejectionReason: 'Reserved for laboratory practicals',
+      );
+
+      expect(request.toMap()['status'], 'rejected');
+      expect(
+        request.toMap()['rejectionReason'],
+        'Reserved for laboratory practicals',
+      );
+      expect(RequestStatus.approved.color, const Color(0xFF287D5C));
+      expect(RequestStatus.returned.color, const Color(0xFF1F6E8C));
     });
   });
 }

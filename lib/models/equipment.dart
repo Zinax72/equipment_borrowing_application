@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// Data model representing a single equipment item from Firestore.
 class Equipment {
   final String id;
   final String name;
@@ -17,8 +18,10 @@ class Equipment {
     required this.imageUrl,
   });
 
+  // Returns true if there is at least 1 unit in stock.
   bool get isAvailable => available > 0;
 
+  // Converts a Firestore document into an Equipment object.
   factory Equipment.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
     return Equipment(

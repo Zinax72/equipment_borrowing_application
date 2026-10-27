@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'request_status.dart';
 
+// Data model for a student's batch equipment borrowing request.
 class BorrowRequest {
   final String id;
   final String userId;
@@ -13,6 +14,7 @@ class BorrowRequest {
   final DateTime returnDate;
   final String photoBase64;
   final RequestStatus status;
+  final String rejectionReason;
   final DateTime createdAt;
 
   const BorrowRequest({
@@ -27,9 +29,33 @@ class BorrowRequest {
     required this.returnDate,
     required this.photoBase64,
     required this.status,
+    this.rejectionReason = '',
     required this.createdAt,
   });
 
+  // Creates a modified copy of this request (used when updating status or rejection reason).
+  BorrowRequest copyWith({
+    RequestStatus? status,
+    String? rejectionReason,
+  }) {
+    return BorrowRequest(
+      id: id,
+      userId: userId,
+      requesterName: requesterName,
+      email: email,
+      equipment: equipment,
+      equipmentQuantities: equipmentQuantities,
+      purpose: purpose,
+      dateNeeded: dateNeeded,
+      returnDate: returnDate,
+      photoBase64: photoBase64,
+      status: status ?? this.status,
+      rejectionReason: rejectionReason ?? this.rejectionReason,
+      createdAt: createdAt,
+    );
+  }
+
+  // Returns a map of item names to quantities, supporting older requests too.
   Map<String, int> get effectiveEquipmentQuantities {
     if (equipmentQuantities.isNotEmpty) return equipmentQuantities;
     final quantities = <String, int>{};
@@ -43,6 +69,7 @@ class BorrowRequest {
     return quantities;
   }
 
+  // Formats selected items into a single readable string (e.g. "Camera x 2, Projector").
   String get equipmentSummary => effectiveEquipmentQuantities.entries
       .map(
         (entry) =>
@@ -50,6 +77,7 @@ class BorrowRequest {
       )
       .join(', ');
 
+  // Converts this request into a Map to save in Firestore.
   Map<String, dynamic> toMap() {
     return {
       'userId': userId,
@@ -62,10 +90,12 @@ class BorrowRequest {
       'returnDate': Timestamp.fromDate(returnDate),
       'photoBase64': photoBase64,
       'status': status.name,
+      'rejectionReason': rejectionReason,
       'createdAt': FieldValue.serverTimestamp(),
     };
   }
 
+  // Builds a BorrowRequest object from a Firestore document snapshot.
   factory BorrowRequest.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
     final equipment = List<String>.from(data['equipment'] ?? []);
@@ -93,6 +123,7 @@ class BorrowRequest {
         (s) => s.name == data['status'],
         orElse: () => RequestStatus.pending,
       ),
+      rejectionReason: (data['rejectionReason'] as String?) ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
