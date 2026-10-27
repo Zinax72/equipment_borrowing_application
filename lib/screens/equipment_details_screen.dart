@@ -40,11 +40,12 @@ class _EquipmentDetailsScreenState extends State<EquipmentDetailsScreen> {
   String get _assetCode {
     final prefix = widget.equipment.category.isNotEmpty
         ? widget.equipment.category
-            .replaceAll(RegExp(r'[^A-Za-z]'), '')
-            .toUpperCase()
+              .replaceAll(RegExp(r'[^A-Za-z]'), '')
+              .toUpperCase()
         : 'AST';
-    final shortPrefix =
-        prefix.length >= 3 ? prefix.substring(0, 3) : prefix.padRight(3, 'X');
+    final shortPrefix = prefix.length >= 3
+        ? prefix.substring(0, 3)
+        : prefix.padRight(3, 'X');
     final hash = widget.equipment.name.codeUnits
         .fold<int>(0, (a, b) => a + b)
         .toString()
@@ -83,18 +84,16 @@ class _EquipmentDetailsScreenState extends State<EquipmentDetailsScreen> {
         flexibleSpace: ClipRect(
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-            child: ColoredBox(
-              color: Colors.white.withValues(alpha: 0.45),
-            ),
+            child: ColoredBox(color: Colors.white.withValues(alpha: 0.45)),
           ),
         ),
         title: Text(
           'Asset Specifications',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: AppColors.darkText,
-                letterSpacing: -0.3,
-              ),
+            fontWeight: FontWeight.w800,
+            color: AppColors.darkText,
+            letterSpacing: -0.3,
+          ),
         ),
       ),
       body: Stack(
@@ -139,8 +138,9 @@ class _EquipmentDetailsScreenState extends State<EquipmentDetailsScreen> {
                                       vertical: 6,
                                     ),
                                     decoration: BoxDecoration(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.86),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.86,
+                                      ),
                                       borderRadius: BorderRadius.circular(999),
                                     ),
                                     child: Text(
@@ -222,9 +222,7 @@ class _EquipmentDetailsScreenState extends State<EquipmentDetailsScreen> {
                       const SizedBox(height: 14),
                       Text(
                         equipment.name,
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineMedium
+                        style: Theme.of(context).textTheme.headlineMedium
                             ?.copyWith(
                               color: AppColors.darkText,
                               fontWeight: FontWeight.w800,
@@ -236,19 +234,19 @@ class _EquipmentDetailsScreenState extends State<EquipmentDetailsScreen> {
                       Text(
                         equipment.description,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: AppColors.mutedText,
-                              height: 1.6,
-                            ),
+                          color: AppColors.mutedText,
+                          height: 1.6,
+                        ),
                       ),
                       const SizedBox(height: 28),
 
                       Text(
                         'TECHNICAL & BORROWING SPECS',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: AppColors.mutedText,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.1,
-                            ),
+                          color: AppColors.mutedText,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.1,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       GridView.count(
@@ -301,9 +299,7 @@ class _EquipmentDetailsScreenState extends State<EquipmentDetailsScreen> {
                             Expanded(
                               child: Text(
                                 'Add multiple items to your Borrowing Basket to submit a single consolidated batch request.',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
+                                style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
                                       color: AppColors.darkText,
                                       height: 1.45,
@@ -363,8 +359,8 @@ class _EquipmentDetailsScreenState extends State<EquipmentDetailsScreen> {
                             icon: Icons.playlist_add_check_rounded,
                             label: equipment.isAvailable
                                 ? (widget.initialQuantity > 0
-                                    ? 'Update Request List'
-                                    : 'Add to Request')
+                                      ? 'Update Request List'
+                                      : 'Add to Request')
                                 : 'Unavailable',
                             onPressed: equipment.isAvailable
                                 ? _handleAddToRequest

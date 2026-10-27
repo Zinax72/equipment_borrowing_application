@@ -43,8 +43,8 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
   final _purposeController = TextEditingController();
   final _picker = ImagePicker();
 
-  late final Stream<List<Equipment>> _equipmentStream =
-      FirestoreService().equipmentStream();
+  late final Stream<List<Equipment>> _equipmentStream = FirestoreService()
+      .equipmentStream();
 
   int _currentStep = 0;
   DateTime? _dateNeeded;
@@ -69,9 +69,9 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
       .join(', ');
 
   int get _selectedUnitCount => widget.selectedEquipment.values.fold<int>(
-        0,
-        (total, quantity) => total + quantity,
-      );
+    0,
+    (total, quantity) => total + quantity,
+  );
 
   int get _distinctItemCount => widget.selectedEquipment.length;
 
@@ -173,9 +173,9 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
                     child: Text(
                       'Attach supporting photo',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.darkText,
-                          ),
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.darkText,
+                      ),
                     ),
                   ),
                   ListTile(
@@ -482,9 +482,9 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
                   Text(
                     'Swipe left to remove',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.mutedText,
-                          fontSize: 11.5,
-                        ),
+                      color: AppColors.mutedText,
+                      fontSize: 11.5,
+                    ),
                   ),
               ],
             ),
@@ -517,18 +517,18 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
                     Text(
                       'Your Borrowing Basket is empty',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.darkText,
-                          ),
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.darkText,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Tap any equipment below or from the Catalog to build your batch request.',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.mutedText,
-                            height: 1.45,
-                          ),
+                        color: AppColors.mutedText,
+                        height: 1.45,
+                      ),
                     ),
                   ],
                 ),
@@ -580,10 +580,7 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
                             ),
                           ),
                           SizedBox(width: 8),
-                          Icon(
-                            Icons.delete_sweep_rounded,
-                            color: Colors.white,
-                          ),
+                          Icon(Icons.delete_sweep_rounded, color: Colors.white),
                         ],
                       ),
                     ),
@@ -616,9 +613,7 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
                                 const SizedBox(height: 2),
                                 Text(
                                   item.name,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleSmall
+                                  style: Theme.of(context).textTheme.titleSmall
                                       ?.copyWith(
                                         color: AppColors.darkText,
                                         fontWeight: FontWeight.w800,
@@ -627,9 +622,7 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
                                 const SizedBox(height: 3),
                                 Text(
                                   '${item.available} available in stock',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
+                                  style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(
                                         color: AppColors.mutedText,
                                         fontSize: 11.5,
@@ -658,10 +651,10 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
               Text(
                 'ADD MORE EQUIPMENT TO REQUEST LIST',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.mutedText,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.9,
-                    ),
+                  color: AppColors.mutedText,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.9,
+                ),
               ),
               const SizedBox(height: 10),
               Wrap(
@@ -848,8 +841,7 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
                         style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
-                          color:
-                              isSelected ? Colors.white : AppColors.darkText,
+                          color: isSelected ? Colors.white : AppColors.darkText,
                         ),
                       ),
                     ),
@@ -945,9 +937,9 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
                     child: Text(
                       'Batch Request Summary',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.darkText,
-                          ),
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.darkText,
+                      ),
                     ),
                   ),
                   TextButton(
@@ -994,9 +986,9 @@ class _BorrowFormScreenState extends State<BorrowFormScreen> {
               const SizedBox(height: 6),
               Text(
                 'Attach a student ID, signed room permit, or activity memo (required).',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.mutedText,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.mutedText),
               ),
               const SizedBox(height: 14),
               if (_imageBytes == null)
@@ -1159,30 +1151,28 @@ class _GlassStepHeader extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeOutCubic,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 9,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
                 decoration: BoxDecoration(
                   color: active
                       ? AppColors.universityRed
                       : completed
-                          ? AppColors.gold.withValues(alpha: 0.24)
-                          : Colors.white.withValues(alpha: 0.55),
+                      ? AppColors.gold.withValues(alpha: 0.24)
+                      : Colors.white.withValues(alpha: 0.55),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: active
                         ? AppColors.gold.withValues(alpha: 0.75)
                         : completed
-                            ? AppColors.universityRed.withValues(alpha: 0.30)
-                            : Colors.white.withValues(alpha: 0.85),
+                        ? AppColors.universityRed.withValues(alpha: 0.30)
+                        : Colors.white.withValues(alpha: 0.85),
                     width: active ? 1.3 : 1.0,
                   ),
                   boxShadow: active
                       ? [
                           BoxShadow(
-                            color:
-                                AppColors.universityRed.withValues(alpha: 0.24),
+                            color: AppColors.universityRed.withValues(
+                              alpha: 0.24,
+                            ),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -1200,8 +1190,8 @@ class _GlassStepHeader extends StatelessWidget {
                         color: active
                             ? AppColors.brightGold
                             : completed
-                                ? AppColors.universityRed
-                                : AppColors.darkText.withValues(alpha: 0.10),
+                            ? AppColors.universityRed
+                            : AppColors.darkText.withValues(alpha: 0.10),
                       ),
                       child: Center(
                         child: completed
@@ -1236,8 +1226,8 @@ class _GlassStepHeader extends StatelessWidget {
                           color: active
                               ? Colors.white
                               : completed
-                                  ? AppColors.universityRed
-                                  : AppColors.darkText,
+                              ? AppColors.universityRed
+                              : AppColors.darkText,
                         ),
                       ),
                     ),
