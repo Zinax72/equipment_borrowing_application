@@ -34,10 +34,7 @@ class BorrowRequest {
   });
 
   // Creates a modified copy of this request (used when updating status or rejection reason).
-  BorrowRequest copyWith({
-    RequestStatus? status,
-    String? rejectionReason,
-  }) {
+  BorrowRequest copyWith({RequestStatus? status, String? rejectionReason}) {
     return BorrowRequest(
       id: id,
       userId: userId,
