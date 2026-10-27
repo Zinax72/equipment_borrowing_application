@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// Displays a bold label and value pair inside the request review summary.
 class ReviewRow extends StatelessWidget {
   final String label;
   final String value;

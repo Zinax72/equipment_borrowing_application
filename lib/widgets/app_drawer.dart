@@ -6,9 +6,11 @@ import '../services/notification_service.dart';
 import '../utils/constants.dart';
 import 'borrowit_logo.dart';
 
+// Slide-out glassmorphic navigation drawer showing user profile, screen shortcuts, and sign out.
 class AppDrawer {
   const AppDrawer._();
 
+  // Opens the drawer modal from the left side of the screen.
   static Future<void> show(
     BuildContext context, {
     required int currentIndex,

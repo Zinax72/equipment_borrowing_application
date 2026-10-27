@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 
+// Frosted glass container (BackdropFilter blur + translucent tint + subtle white border).
 class GlassPanel extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;

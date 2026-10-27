@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 
+// Brand logo widget combining the custom BorrowIT vector icon and "BorrowIT" wordmark.
 class BorrowItLogo extends StatelessWidget {
   final bool compact;
 
@@ -47,6 +48,7 @@ class BorrowItLogo extends StatelessWidget {
   }
 }
 
+// Custom-painted vector icon showing a 3D gold equipment box inside a maroon return arrow.
 class BorrowItMark extends StatelessWidget {
   final double size;
   final bool glow;

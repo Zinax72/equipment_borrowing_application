@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+// Shared color palette for the BulSU BorrowIT theme and glassmorphic surfaces.
 class AppColors {
+  // Primary BulSU brand colors (Maroon and Gold).
   static const Color universityRed = Color(0xFF7A132F);
   static const Color maroonRuby = Color(0xFF9E1F43);
   static const Color brightRed = Color(0xFFC22952);
@@ -9,6 +11,7 @@ class AppColors {
   static const Color softYellow = Color(0xFFFFF6E0);
   static const Color goldWash = Color(0xFFFFF3D6);
 
+  // Neutral text, background, and status accent colors.
   static const Color darkText = Color(0xFF1A212B);
   static const Color mutedText = Color(0xFF5E6A78);
   static const Color subtleText = Color(0xFF8C97A4);
@@ -17,6 +20,7 @@ class AppColors {
   static const Color coralWash = Color(0xFFFBECEF);
   static const Color green = Color(0xFF287D5C);
 
+  // Translucent colors for glassmorphism panels.
   static const Color glassWhite = Color(0xB8FFFFFF);
   static const Color glassStrong = Color(0xD9FFFFFF);
   static const Color glassSubtle = Color(0x80FFFFFF);

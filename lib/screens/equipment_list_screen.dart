@@ -8,6 +8,7 @@ import '../widgets/equipment_card.dart';
 import '../widgets/glass_panel.dart';
 import 'equipment_details_screen.dart';
 
+// Full catalog screen with live search bar, category filter pills, and responsive grid.
 class EquipmentListScreen extends StatefulWidget {
   final ValueChanged<Equipment> onBorrow;
   final Map<String, int> selectedEquipment;
@@ -42,6 +43,7 @@ class _EquipmentListScreenState extends State<EquipmentListScreen> {
         (sum, q) => sum + q,
       );
 
+  // Filters equipment list by selected category and search keyword.
   List<Equipment> _filter(List<Equipment> all) {
     final query = _query.trim().toLowerCase();
     return all.where((equipment) {

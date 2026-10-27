@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/request_status.dart';
 
+// Colored pill badge displaying the icon and label of a RequestStatus.
 class StatusChip extends StatelessWidget {
   final RequestStatus status;
   final bool showArrow;

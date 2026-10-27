@@ -17,6 +17,7 @@ import 'equipment_list_screen.dart';
 import 'history_screen.dart';
 import 'my_requests_screen.dart';
 
+// Main shell screen holding the top AppBar, navigation drawer, 3 main tabs, and bottom nav bar.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -25,14 +26,16 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Currently active bottom navigation tab (0 = Catalog, 1 = Basket, 2 = Requests).
   int selectedIndex = 0;
+  // Shared Borrowing Basket state: maps equipment name -> selected quantity.
   final Map<String, int> selectedEquipment = {};
 
   final _firestore = FirestoreService();
-  late final Stream<List<Equipment>> _equipmentStream =
-      _firestore.equipmentStream();
-  late final Stream<List<BorrowRequest>> _requestsStream = _firestore
-      .requestsStream(FirebaseAuth.instance.currentUser?.uid ?? '');
+  late Stream<List<Equipment>> _equipmentStream = _firestore.equipmentStream();
+  late Stream<List<BorrowRequest>> _requestsStream = _firestore.requestsStream(
+    FirebaseAuth.instance.currentUser?.uid ?? '',
+  );
   StreamSubscription<List<BorrowRequest>>? _statusSub;
   final Map<String, RequestStatus> _lastStatus = {};
   bool _firstSnapshot = true;
@@ -40,7 +43,19 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // Seed sample equipment if Firestore collection is empty, and watch for request status changes.
     _firestore.seedEquipmentIfEmpty();
+    _watchStatusChanges();
+  }
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    _equipmentStream = _firestore.equipmentStream();
+    _requestsStream = _firestore.requestsStream(
+      FirebaseAuth.instance.currentUser?.uid ?? '',
+    );
+    _statusSub?.cancel();
     _watchStatusChanges();
   }
 
@@ -50,24 +65,31 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  // Total number of equipment units currently inside the Borrowing Basket.
   int get _basketUnitCount => selectedEquipment.values.fold<int>(
         0,
         (total, qty) => total + qty,
       );
 
+  // Listens for status changes on the user's requests and triggers a local notification.
   void _watchStatusChanges() {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
     _statusSub = _firestore.requestsStream(uid).listen((requests) {
       for (final r in requests) {
         final before = _lastStatus[r.id];
         if (!_firstSnapshot && before != null && before != r.status) {
+          final reasonSuffix = r.status == RequestStatus.rejected &&
+                  r.rejectionReason.trim().isNotEmpty
+              ? ' Reason: ${r.rejectionReason.trim()}'
+              : '';
           NotificationService.instance.showNow(
             requestId: r.id,
             title: 'Request ${r.status.label}',
             body:
-                '${r.equipmentSummary} is now ${r.status.label.toLowerCase()}.',
+                '${r.equipmentSummary} is now ${r.status.label.toLowerCase()}.$reasonSuffix',
           );
-          if (r.status == RequestStatus.returned) {
+          if (r.status == RequestStatus.returned ||
+              r.status == RequestStatus.rejected) {
             NotificationService.instance.cancelReminder(r.id);
           }
         }
@@ -77,12 +99,14 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // Switches between the Catalog, Basket, and Requests tabs.
   void changePage(int index) {
     setState(() {
       selectedIndex = index;
     });
   }
 
+  // Adds, updates, or removes an item quantity in the Borrowing Basket.
   void setEquipmentQuantity(String equipmentName, int quantity) {
     setState(() {
       if (quantity <= 0) {
@@ -93,6 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // Clears the basket after submitting a request and jumps to the Requests tab.
   void onRequestSubmitted() {
     setState(() {
       selectedEquipment.clear();
@@ -100,6 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // Opens the Borrowing History Log screen.
   void openHistory() {
     Navigator.push(
       context,
@@ -107,6 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Opens the full searchable Equipment Catalog screen.
   void openEquipmentList() {
     Navigator.push(
       context,

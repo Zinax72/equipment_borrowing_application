@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 import 'glass_panel.dart';
 
+// Dashboard metric card showing an icon, large count value, and short label.
 class SummaryCard extends StatelessWidget {
   final String title;
   final String value;
@@ -59,11 +60,11 @@ class SummaryCard extends StatelessWidget {
           Text(
             value,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColors.darkText,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.8,
-                  height: 1.0,
-                ),
+              color: AppColors.darkText,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.8,
+              height: 1.0,
+            ),
           ),
           const SizedBox(height: 5),
           Text(
@@ -71,10 +72,10 @@ class SummaryCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: AppColors.mutedText,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.1,
-                ),
+              color: AppColors.mutedText,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.1,
+            ),
           ),
         ],
       ),

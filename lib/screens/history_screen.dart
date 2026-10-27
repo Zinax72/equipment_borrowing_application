@@ -10,6 +10,7 @@ import '../widgets/glass_panel.dart';
 import '../widgets/request_card.dart';
 import '../widgets/section_title.dart';
 
+// Displays the archive of completed (Returned) equipment borrowing requests.
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
 
@@ -60,6 +61,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
+                // Filter only requests that have been marked as Returned.
                 final history = snapshot.data!
                     .where((request) => request.status == RequestStatus.returned)
                     .toList();
@@ -96,12 +98,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: AppColors.green.withValues(alpha: 0.14),
+                              color: RequestStatus.returned.color
+                                  .withValues(alpha: 0.14),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.task_alt_rounded,
-                              color: AppColors.green,
+                              color: RequestStatus.returned.color,
                             ),
                           ),
                           const SizedBox(width: 12),

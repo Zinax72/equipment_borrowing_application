@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 
+// Loads an equipment image from a URL with rounded corners, loading spinner, and fallback icon.
 class EquipmentImage extends StatelessWidget {
   final String imageUrl;
   final double? height;

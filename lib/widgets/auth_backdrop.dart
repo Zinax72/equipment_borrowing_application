@@ -2,12 +2,14 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../utils/constants.dart';
 
+// Animated campus background and primary button used on the Landing and Auth screens.
 class AuthBackdropColors {
   const AuthBackdropColors._();
 
   static const Color lightCanvas = Color(0xFFF8F6F8);
 }
 
+// Renders the drifting BulSU campus photo, soft light gradient, and blurred ambient orbs.
 class AuthBackdrop extends StatefulWidget {
   final double photoFraction;
 
@@ -151,6 +153,7 @@ class _Glow extends StatelessWidget {
   }
 }
 
+// Primary BulSU Maroon CTA button used on the Landing and Authentication screens.
 class GoldButton extends StatelessWidget {
   final String label;
   final IconData? icon;
