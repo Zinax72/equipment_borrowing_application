@@ -46,7 +46,7 @@ class BorrowRequest {
   String get equipmentSummary => effectiveEquipmentQuantities.entries
       .map(
         (entry) =>
-            entry.value > 1 ? '${entry.key} × ${entry.value}' : entry.key,
+            entry.value > 1 ? '${entry.key} \u00D7 ${entry.value}' : entry.key,
       )
       .join(', ');
 

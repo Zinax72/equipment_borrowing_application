@@ -10,21 +10,36 @@ class StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
       decoration: BoxDecoration(
-        color: status.bgColor,
-        borderRadius: BorderRadius.circular(20),
+        color: status.bgColor.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: status.color.withValues(alpha: 0.25),
+          width: 1,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          Icon(status.icon, size: 13.5, color: status.color),
+          const SizedBox(width: 5),
           Text(
             status.label,
-            style: TextStyle(color: status.color, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: status.color,
+              fontWeight: FontWeight.w800,
+              fontSize: 11.5,
+              letterSpacing: 0.1,
+            ),
           ),
           if (showArrow) ...[
-            const SizedBox(width: 4),
-            Icon(Icons.arrow_drop_down, color: status.color, size: 18),
+            const SizedBox(width: 3),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: status.color,
+              size: 16,
+            ),
           ],
         ],
       ),

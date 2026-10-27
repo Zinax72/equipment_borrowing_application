@@ -1,20 +1,21 @@
+import 'dart:async';
+import 'dart:ui';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/borrow_request.dart';
 import '../models/equipment.dart';
 import '../models/request_status.dart';
 import '../services/firestore_service.dart';
+import '../services/notification_service.dart';
 import '../utils/constants.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/borrowit_logo.dart';
+import '../widgets/campus_backdrop.dart';
 import 'borrow_form_screen.dart';
 import 'dashboard_screen.dart';
 import 'equipment_list_screen.dart';
 import 'history_screen.dart';
 import 'my_requests_screen.dart';
-import 'dart:async';
-import 'dart:ui';
-import '../services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,8 +29,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final Map<String, int> selectedEquipment = {};
 
   final _firestore = FirestoreService();
-  late final Stream<List<Equipment>> _equipmentStream = _firestore
-      .equipmentStream();
+  late final Stream<List<Equipment>> _equipmentStream =
+      _firestore.equipmentStream();
   late final Stream<List<BorrowRequest>> _requestsStream = _firestore
       .requestsStream(FirebaseAuth.instance.currentUser?.uid ?? '');
   StreamSubscription<List<BorrowRequest>>? _statusSub;
@@ -49,7 +50,11 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // Notifies when a request's status changes (not on the first load).
+  int get _basketUnitCount => selectedEquipment.values.fold<int>(
+        0,
+        (total, qty) => total + qty,
+      );
+
   void _watchStatusChanges() {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
     _statusSub = _firestore.requestsStream(uid).listen((requests) {
@@ -123,14 +128,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final basketUnits = _basketUnitCount;
+
     return Scaffold(
+      extendBody: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         flexibleSpace: ClipRect(
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-            child: ColoredBox(color: AppColors.canvas.withValues(alpha: 0.72)),
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.62),
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    width: 1,
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
         title: const BorrowItLogo(compact: true),
@@ -145,11 +163,37 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         actions: [
+          Center(
+            child: Badge(
+              isLabelVisible: basketUnits > 0,
+              backgroundColor: AppColors.universityRed,
+              label: Text(
+                '$basketUnits',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              child: IconButton(
+                tooltip: 'Borrowing Basket',
+                icon: Icon(
+                  selectedIndex == 1
+                      ? Icons.shopping_basket_rounded
+                      : Icons.shopping_basket_outlined,
+                  color: basketUnits > 0
+                      ? AppColors.universityRed
+                      : AppColors.darkText,
+                ),
+                onPressed: () => changePage(1),
+              ),
+            ),
+          ),
           IconButton(
-            tooltip: 'Borrowing History',
+            tooltip: 'Borrowing History Log',
             icon: const Icon(Icons.history_rounded),
             onPressed: openHistory,
           ),
+          const SizedBox(width: 6),
         ],
       ),
       body: Stack(
@@ -188,18 +232,22 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 8, 18, 8),
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(32),
+            borderRadius: BorderRadius.circular(30),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.88),
-                  borderRadius: BorderRadius.circular(32),
+                  color: Colors.white.withValues(alpha: 0.78),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.88),
+                    width: 1.2,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.darkText.withValues(alpha: 0.12),
+                      color: AppColors.universityRed.withValues(alpha: 0.08),
                       blurRadius: 28,
                       offset: const Offset(0, 10),
                     ),
@@ -208,20 +256,30 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: NavigationBar(
                   selectedIndex: selectedIndex,
                   onDestinationSelected: changePage,
-                  destinations: const [
-                    NavigationDestination(
+                  destinations: [
+                    const NavigationDestination(
                       icon: Icon(Icons.grid_view_outlined),
                       selectedIcon: Icon(Icons.grid_view_rounded),
-                      label: 'Dashboard',
+                      label: 'Catalog',
                     ),
                     NavigationDestination(
-                      icon: Icon(Icons.add_box_outlined),
-                      selectedIcon: Icon(Icons.add_box_rounded),
-                      label: 'Borrow',
+                      icon: Badge(
+                        isLabelVisible: basketUnits > 0,
+                        backgroundColor: AppColors.universityRed,
+                        label: Text('$basketUnits'),
+                        child: const Icon(Icons.shopping_basket_outlined),
+                      ),
+                      selectedIcon: Badge(
+                        isLabelVisible: basketUnits > 0,
+                        backgroundColor: AppColors.universityRed,
+                        label: Text('$basketUnits'),
+                        child: const Icon(Icons.shopping_basket_rounded),
+                      ),
+                      label: 'Basket',
                     ),
-                    NavigationDestination(
-                      icon: Icon(Icons.receipt_long_outlined),
-                      selectedIcon: Icon(Icons.receipt_long_rounded),
+                    const NavigationDestination(
+                      icon: Icon(Icons.timeline_outlined),
+                      selectedIcon: Icon(Icons.timeline_rounded),
                       label: 'Requests',
                     ),
                   ],
