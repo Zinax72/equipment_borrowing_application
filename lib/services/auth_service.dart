@@ -24,10 +24,7 @@ class AuthService {
   }
 
   // Signs in an existing user with email and password.
-  Future<void> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> login({required String email, required String password}) async {
     await _auth.signInWithEmailAndPassword(email: email, password: password);
   }
 
