@@ -21,6 +21,18 @@ class Equipment {
   // Returns true if there is at least 1 unit in stock.
   bool get isAvailable => available > 0;
 
+  // Returns a copy of this equipment with an updated available stock count.
+  Equipment copyWith({int? available}) {
+    return Equipment(
+      id: id,
+      name: name,
+      category: category,
+      available: available ?? this.available,
+      description: description,
+      imageUrl: imageUrl,
+    );
+  }
+
   // Converts a Firestore document into an Equipment object.
   factory Equipment.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};

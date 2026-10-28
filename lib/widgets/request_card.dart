@@ -12,12 +12,14 @@ class RequestCard extends StatelessWidget {
   final BorrowRequest request;
   final ValueChanged<RequestStatus>? onStatusChanged;
   final VoidCallback? onCancel;
+  final bool showStatusLogs;
 
   const RequestCard({
     super.key,
     required this.request,
     this.onStatusChanged,
     this.onCancel,
+    this.showStatusLogs = true,
   });
 
   String get _shortRequestId {
@@ -63,31 +65,58 @@ class RequestCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              if (onStatusChanged == null)
+              // Hide the status menu if the status is final (Returned or Rejected) or read-only.
+              if (onStatusChanged == null ||
+                  request.status.allowedNextStatuses.isEmpty)
                 StatusChip(status: request.status)
               else
                 PopupMenuButton<RequestStatus>(
-                  tooltip: 'Update request stage (demo)',
+                  tooltip: 'Update request stage',
                   onSelected: onStatusChanged,
-                  itemBuilder: (context) => RequestStatus.values
-                      .map(
-                        (status) => PopupMenuItem<RequestStatus>(
-                          value: status,
-                          child: Row(
-                            children: [
-                              Icon(status.icon, size: 17, color: status.color),
-                              const SizedBox(width: 8),
-                              Text(
-                                status.label,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
+                  itemBuilder: (context) => RequestStatus.values.map((status) {
+                    // Only forward transitions allowed by RequestStatusX.canTransitionTo are enabled.
+                    final isAllowed = request.status.canTransitionTo(status);
+                    final isCurrent = status == request.status;
+                    return PopupMenuItem<RequestStatus>(
+                      value: status,
+                      enabled: isAllowed,
+                      child: Row(
+                        children: [
+                          Icon(
+                            isAllowed
+                                ? status.icon
+                                : (isCurrent
+                                    ? Icons.radio_button_checked_rounded
+                                    : Icons.lock_outline_rounded),
+                            size: 17,
+                            color: isAllowed
+                                ? status.color
+                                : AppColors.mutedText.withValues(alpha: 0.45),
                           ),
-                        ),
-                      )
-                      .toList(),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              status.label,
+                              style: TextStyle(
+                                fontWeight: isAllowed
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                color: isAllowed
+                                    ? AppColors.darkText
+                                    : AppColors.mutedText.withValues(alpha: 0.5),
+                              ),
+                            ),
+                          ),
+                          if (isAllowed)
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 14,
+                              color: status.color,
+                            ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
                   child: StatusChip(status: request.status, showArrow: true),
                 ),
             ],
@@ -264,6 +293,14 @@ class RequestCard extends StatelessWidget {
             ),
           ],
 
+          // Displays the chronological status change log when viewed inside the History / Log screen.
+          if (showStatusLogs) ...[
+            const SizedBox(height: 16),
+            _RequestStatusLogSection(
+              entries: request.effectiveStatusHistory,
+            ),
+          ],
+
           if (onCancel != null) ...[
             const SizedBox(height: 10),
             Align(
@@ -421,6 +458,116 @@ class _RequestLifecycleTimeline extends StatelessWidget {
               );
             }),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// Renders the list of recorded status changes (Pending, Approved, Borrowed, Returned, Rejected) for a request.
+class _RequestStatusLogSection extends StatelessWidget {
+  final List<StatusLogEntry> entries;
+
+  const _RequestStatusLogSection({required this.entries});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.88)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.history_edu_rounded,
+                size: 15,
+                color: AppColors.universityRed,
+              ),
+              SizedBox(width: 6),
+              Text(
+                'STATUS ACTIVITY LOG',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
+                  color: AppColors.universityRed,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          for (var i = 0; i < entries.length; i++) ...[
+            if (i > 0) const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 2),
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: entries[i].status.bgColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: entries[i].status.color.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Icon(
+                    entries[i].status.icon,
+                    size: 12,
+                    color: entries[i].status.color,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            entries[i].status.label,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: entries[i].status.color,
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            formatDateTime(entries[i].timestamp),
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.mutedText,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (entries[i].note.trim().isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          entries[i].note.trim(),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.darkText,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

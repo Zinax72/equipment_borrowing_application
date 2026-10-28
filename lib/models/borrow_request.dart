@@ -1,6 +1,38 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'request_status.dart';
 
+// Represents a single status change event in a request's history log.
+class StatusLogEntry {
+  final RequestStatus status;
+  final DateTime timestamp;
+  final String note;
+
+  const StatusLogEntry({
+    required this.status,
+    required this.timestamp,
+    this.note = '',
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'status': status.name,
+      'timestamp': Timestamp.fromDate(timestamp),
+      'note': note,
+    };
+  }
+
+  factory StatusLogEntry.fromMap(Map<String, dynamic> map) {
+    return StatusLogEntry(
+      status: RequestStatus.values.firstWhere(
+        (s) => s.name == map['status'],
+        orElse: () => RequestStatus.pending,
+      ),
+      timestamp: (map['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      note: (map['note'] as String?) ?? '',
+    );
+  }
+}
+
 // Data model for a student's batch equipment borrowing request.
 class BorrowRequest {
   final String id;
@@ -15,6 +47,7 @@ class BorrowRequest {
   final String photoBase64;
   final RequestStatus status;
   final String rejectionReason;
+  final List<StatusLogEntry> statusHistory;
   final DateTime createdAt;
 
   const BorrowRequest({
@@ -30,11 +63,16 @@ class BorrowRequest {
     required this.photoBase64,
     required this.status,
     this.rejectionReason = '',
+    this.statusHistory = const [],
     required this.createdAt,
   });
 
-  // Creates a modified copy of this request (used when updating status or rejection reason).
-  BorrowRequest copyWith({RequestStatus? status, String? rejectionReason}) {
+  // Creates a modified copy of this request (used when updating status, reason, or history logs).
+  BorrowRequest copyWith({
+    RequestStatus? status,
+    String? rejectionReason,
+    List<StatusLogEntry>? statusHistory,
+  }) {
     return BorrowRequest(
       id: id,
       userId: userId,
@@ -48,8 +86,66 @@ class BorrowRequest {
       photoBase64: photoBase64,
       status: status ?? this.status,
       rejectionReason: rejectionReason ?? this.rejectionReason,
+      statusHistory: statusHistory ?? this.statusHistory,
       createdAt: createdAt,
     );
+  }
+
+  // Returns the recorded status history, or builds a fallback log trail for older requests.
+  List<StatusLogEntry> get effectiveStatusHistory {
+    if (statusHistory.isNotEmpty) return statusHistory;
+
+    final entries = <StatusLogEntry>[
+      StatusLogEntry(
+        status: RequestStatus.pending,
+        timestamp: createdAt,
+        note: 'Borrowing request submitted',
+      ),
+    ];
+
+    if (status == RequestStatus.rejected) {
+      entries.add(
+        StatusLogEntry(
+          status: RequestStatus.rejected,
+          timestamp: createdAt,
+          note: rejectionReason.trim().isNotEmpty
+              ? 'Rejected: ${rejectionReason.trim()}'
+              : 'Request declined',
+        ),
+      );
+    } else {
+      if (status == RequestStatus.approved ||
+          status == RequestStatus.borrowed ||
+          status == RequestStatus.returned) {
+        entries.add(
+          StatusLogEntry(
+            status: RequestStatus.approved,
+            timestamp: createdAt,
+            note: 'Request approved (stock reserved)',
+          ),
+        );
+      }
+      if (status == RequestStatus.borrowed ||
+          status == RequestStatus.returned) {
+        entries.add(
+          StatusLogEntry(
+            status: RequestStatus.borrowed,
+            timestamp: createdAt,
+            note: 'Equipment checked out by student',
+          ),
+        );
+      }
+      if (status == RequestStatus.returned) {
+        entries.add(
+          StatusLogEntry(
+            status: RequestStatus.returned,
+            timestamp: createdAt,
+            note: 'Equipment returned & stock restored',
+          ),
+        );
+      }
+    }
+    return entries;
   }
 
   // Returns a map of item names to quantities, supporting older requests too.
@@ -88,6 +184,7 @@ class BorrowRequest {
       'photoBase64': photoBase64,
       'status': status.name,
       'rejectionReason': rejectionReason,
+      'statusHistory': effectiveStatusHistory.map((e) => e.toMap()).toList(),
       'createdAt': FieldValue.serverTimestamp(),
     };
   }
@@ -102,6 +199,14 @@ class BorrowRequest {
             (key, value) => MapEntry(key.toString(), (value as num).toInt()),
           )
         : _countEquipment(equipment);
+
+    final rawHistory = data['statusHistory'];
+    final parsedHistory = rawHistory is List
+        ? rawHistory
+            .whereType<Map>()
+            .map((item) => StatusLogEntry.fromMap(Map<String, dynamic>.from(item)))
+            .toList()
+        : <StatusLogEntry>[];
 
     return BorrowRequest(
       id: doc.id,
@@ -121,6 +226,7 @@ class BorrowRequest {
         orElse: () => RequestStatus.pending,
       ),
       rejectionReason: (data['rejectionReason'] as String?) ?? '',
+      statusHistory: parsedHistory,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }

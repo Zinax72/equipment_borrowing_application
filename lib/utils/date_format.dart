@@ -16,3 +16,11 @@ String formatDate(DateTime d) {
   ];
   return '${months[d.month - 1]} ${d.day}, ${d.year}';
 }
+
+// Formats a DateTime with time for activity logs (e.g. "Oct 28, 2026 - 2:15 PM").
+String formatDateTime(DateTime d) {
+  final hour12 = d.hour % 12 == 0 ? 12 : d.hour % 12;
+  final minute = d.minute.toString().padLeft(2, '0');
+  final period = d.hour >= 12 ? 'PM' : 'AM';
+  return '${formatDate(d)} \u00B7 $hour12:$minute $period';
+}

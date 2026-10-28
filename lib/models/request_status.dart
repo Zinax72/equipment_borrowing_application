@@ -82,4 +82,27 @@ extension RequestStatusX on RequestStatus {
         return const Color(0xFFFDECEF);
     }
   }
+
+  // Defines the strict forward-only status transitions allowed from the current status.
+  List<RequestStatus> get allowedNextStatuses {
+    switch (this) {
+      case RequestStatus.pending:
+        return const [RequestStatus.approved, RequestStatus.rejected];
+      case RequestStatus.approved:
+        return const [RequestStatus.borrowed];
+      case RequestStatus.borrowed:
+        return const [RequestStatus.returned];
+      case RequestStatus.returned:
+      case RequestStatus.rejected:
+        return const [];
+    }
+  }
+
+  // Returns true only if moving from the current status to [next] is permitted.
+  bool canTransitionTo(RequestStatus next) =>
+      allowedNextStatuses.contains(next);
+
+  // Returns true when this status deducts equipment from available stock.
+  bool get reservesStock =>
+      this == RequestStatus.approved || this == RequestStatus.borrowed;
 }

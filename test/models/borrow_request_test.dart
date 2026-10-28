@@ -69,6 +69,32 @@ void main() {
       );
       expect(RequestStatus.approved.color, const Color(0xFF287D5C));
       expect(RequestStatus.returned.color, const Color(0xFF1F6E8C));
+      expect(request.effectiveStatusHistory.length, 2);
+      expect(request.effectiveStatusHistory.last.status, RequestStatus.rejected);
+    });
+
+    test('enforces strict forward-only status transition rules and stock reservation', () {
+      expect(RequestStatus.pending.canTransitionTo(RequestStatus.approved), isTrue);
+      expect(RequestStatus.pending.canTransitionTo(RequestStatus.rejected), isTrue);
+      expect(RequestStatus.pending.canTransitionTo(RequestStatus.borrowed), isFalse);
+
+      expect(RequestStatus.approved.canTransitionTo(RequestStatus.borrowed), isTrue);
+      expect(RequestStatus.approved.canTransitionTo(RequestStatus.pending), isFalse);
+      expect(RequestStatus.approved.canTransitionTo(RequestStatus.rejected), isFalse);
+
+      expect(RequestStatus.borrowed.canTransitionTo(RequestStatus.returned), isTrue);
+      expect(RequestStatus.borrowed.canTransitionTo(RequestStatus.approved), isFalse);
+      expect(RequestStatus.borrowed.canTransitionTo(RequestStatus.pending), isFalse);
+      expect(RequestStatus.borrowed.canTransitionTo(RequestStatus.rejected), isFalse);
+
+      expect(RequestStatus.returned.allowedNextStatuses, isEmpty);
+      expect(RequestStatus.rejected.allowedNextStatuses, isEmpty);
+
+      expect(RequestStatus.pending.reservesStock, isFalse);
+      expect(RequestStatus.approved.reservesStock, isTrue);
+      expect(RequestStatus.borrowed.reservesStock, isTrue);
+      expect(RequestStatus.returned.reservesStock, isFalse);
+      expect(RequestStatus.rejected.reservesStock, isFalse);
     });
   });
 }

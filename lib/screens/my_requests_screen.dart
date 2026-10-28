@@ -75,11 +75,12 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
     }
   }
 
-  // Updates request status; if Rejected is selected, prompts for a rejection reason first.
+  // Updates request status; enforces forward-only flow and prompts for reason when Rejected.
   Future<void> _handleStatusChange(
     BorrowRequest request,
     RequestStatus status,
   ) async {
+    if (!request.status.canTransitionTo(status)) return;
     if (status == RequestStatus.rejected) {
       final reason = await _promptRejectionReason(request);
       if (reason == null) return;
@@ -130,9 +131,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
           final rejected = allRequests
               .where((request) => request.status == RequestStatus.rejected)
               .toList();
-          final returnedCount = allRequests
-              .where((request) => request.status == RequestStatus.returned)
-              .length;
+          final totalLogCount = allRequests.length;
 
           // Determines which list of requests to display based on the selected filter pill.
           final filteredRequests = _statusFilter == null
@@ -180,7 +179,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Log ($returnedCount)',
+                          'Log ($totalLogCount)',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
@@ -270,7 +269,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen> {
                 ...filteredRequests.map(
                   (request) => RequestCard(
                     request: request,
-                    onStatusChanged: request.status == RequestStatus.rejected
+                    onStatusChanged: request.status.allowedNextStatuses.isEmpty
                         ? null
                         : (status) => _handleStatusChange(request, status),
                     onCancel: request.status == RequestStatus.pending
